@@ -15,7 +15,7 @@ when not defined(js):
     Nim Reactive - a framework for building cross-platform apps in Nim.
 
     Usage:
-        reactive <action> <path>
+        reactive <path>
         reactive (-h | --help)
         reactive --version
 

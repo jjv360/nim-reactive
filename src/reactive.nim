@@ -95,8 +95,23 @@ template Reactive*(body: untyped) =
 
 ## This code is run when we are executing our command-line binary.
 when isMainModule:
+    import os
+    import strformat
+    import sequtils
 
-    echo "TODO: Create wrapper CLI tool which just forwards to reactive.<platform> binary"
+    # First param is always the platform ID
+    var args = commandLineParams()
+    var platform = args[0]
+    args = args[1..args.len-1]
+
+    # Get command to execute
+    let exe = findExe("reactive." & platform)
+    if exe == "": raiseAssert(fmt"Could not find the platform binary 'reactive.{platform}'.")
+    let cmd = concat(@[exe], args).quoteShellCommand
+
+    # Run the platform binary, and quit with the same exit code
+    echo "Running command: " & cmd
+    quit(execShellCmd(cmd))
 
     # CLI-only imports
 #     import docopt
