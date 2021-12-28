@@ -2,7 +2,7 @@ import strformat
 
 # Package
 
-version       = "0.1.1"
+version       = "0.1.2"
 author        = "jjv360"
 description   = "Cross-platform app development framework"
 license       = "MIT"
@@ -10,7 +10,7 @@ srcDir        = "src"
 installExt    = @["nim"]
 namedBin      = @{
     "reactive": "reactive",
-    "reactivepkg/plugins/web": "reactive.web"
+    "reactivepkg/plugins/web": "reactive_platform_web"
 }.toTable
 
 

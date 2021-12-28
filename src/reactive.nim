@@ -95,9 +95,31 @@ template Reactive*(body: untyped) =
 
 ## This code is run when we are executing our command-line binary.
 when isMainModule:
-    import os
+    import os, osproc
     import strformat
     import sequtils
+    import strutils
+
+    # Find path to a platform binary
+    proc pathToPlatformBinary(platformID: string): string =
+
+        # Try find the exe on the path
+        var exe = findExe("reactive_platform_" & platformID)
+        if exe != "":
+            return exe
+
+        # Not found, try search for built-in platform plugin
+        exe = execProcess("nimble path reactive").strip() / fmt"reactive_platform_{platformID}"
+        if fileExists(exe):
+            return exe
+
+        # Not found, try search for an external platform plugin
+        exe = execProcess(fmt"nimble path reactive_platform_{platformID}").strip() / fmt"reactive_platform_{platformID}"
+        if fileExists(exe):
+            return exe
+
+        # Still not found!
+        raiseAssert(fmt"Platform plugin '{platformID}' not found! Have you added the requirement to your nimble file?")
 
     # First param is always the platform ID
     var args = commandLineParams()
@@ -105,9 +127,7 @@ when isMainModule:
     args = args[1..args.len-1]
 
     # Get command to execute
-    let exe = findExe("reactive." & platform)
-    if exe == "": raiseAssert(fmt"Could not find the platform binary 'reactive.{platform}'.")
-    let cmd = concat(@[exe], args).quoteShellCommand
+    let cmd = concat(@[pathToPlatformBinary(platform)], args).quoteShellCommand
 
     # Run the platform binary, and quit with the same exit code
     echo "Running command: " & cmd
