@@ -1,0 +1,3 @@
+[submodule "examples/calculator"]
+	path = examples/calculator
+	url = https://github.com/jjv360/nim-reactive-calculator

@@ -9,8 +9,13 @@ license       = "MIT"
 srcDir        = "src"
 installExt    = @["nim"]
 namedBin      = @{
+
+    # Main binary
     "reactive": "reactive",
+
+    # Built-in platform plugins
     "reactivepkg/plugins/web": "reactive_platform_web"
+    
 }.toTable
 
 
@@ -20,13 +25,3 @@ requires "nim >= 1.6.2"
 requires "classes >= 0.2.12"
 requires "docopt >= 0.6.7"
 requires "regex >= 0.19.0"
-
-
-# Build tasks
-import os
-task reactive, "Build the app":
-    var params = @[gorge("nimble path reactive").strip() & "/reactive"]; var foundSeparator = false
-    for param in commandLineParams():
-        if foundSeparator: params.add(param)
-        if param == "reactive": foundSeparator = true
-    exec "nimble install -y"; exec params.quoteShellCommand
