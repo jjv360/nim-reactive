@@ -80,6 +80,10 @@ class ComponentTreeNode:
             this.component.didMount()
             this.componentIsMounted = true
 
+        # Do layout
+        this.component.onPlatformLayout()
+        this.component.didLayout()
+
         # Notify updated
         this.component.onPlatformUpdate()
         this.component.didUpdate()

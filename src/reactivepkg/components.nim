@@ -10,6 +10,11 @@ macro registerAs*(id: string) =
     discard
 
 
+##
+## Base layout class
+class BaseLayout
+
+
 ## The `component` macro is the same as the `class` macro, but allows for extra component-based actions.
 macro component*(head: untyped, body: untyped): untyped =
     mixin class
@@ -107,14 +112,8 @@ class BaseComponent:
     ## Parent component
     var parent: BaseComponent = nil
 
-    ## Platform ID ... used by platform plugins to identify this component type
-    var platformSpecificType = ""
-
-    ## Default layout fields
-    var top = 0
-    var left = 0
-    var width = 0
-    var height = 0
+    ## Layout
+    var layout: BaseLayout = nil
 
     ## Default style fields
     var backgroundColor = ""
@@ -136,6 +135,9 @@ class BaseComponent:
 
     ## Called when the component's properties or state is updated.
     method didUpdate() = discard
+
+    ## Called when the component layout should be re-evaluated by the platform plugin
+    method onPlatformLayout() = discard # this is optional ... raiseAssert("The platform plugin must implement onPlatformUpdate().")
 
     ## Called when the layout of this component changed. Layout changes don't trigger a render() unless you call this.updateUi() in here.
     method didLayout() = discard
@@ -164,10 +166,7 @@ class BaseComponent:
 
         # Copy generic props
         this.children = newProps.children
-        this.top = newProps.top
-        this.left = newProps.left
-        this.width = newProps.width
-        this.height = newProps.height
+        this.layout = newProps.layout
         this.backgroundColor = newProps.backgroundColor
 
 

@@ -16,15 +16,11 @@ proc convertCallToComponentCreation(callNode2: NimNode, outputNode: NimNode, par
         return
 
     # Check node type, it should be a Call
-    if callNode.kind != nnkCall:
-        # echo callNode.treeRepr
-        # raiseAssert("Unknown reactiveUi format.")
+    if callNode.kind != nnkCall and callNode.kind != nnkObjConstr:
 
         # Attempt to get string representation of input
         callNode = quote do:
             Text(internalTextContent = $(`callNode`))
-
-        # echo callNode.treeRepr
 
     # Get name for this variable
     var varName = ident("root")
@@ -54,11 +50,17 @@ proc convertCallToComponentCreation(callNode2: NimNode, outputNode: NimNode, par
     for idx, subnode in callNode:
 
         # Check type
-        if subnode.kind == nnkExprEqExpr:
+        if subnode.kind == nnkExprEqExpr or subnode.kind == nnkExprColonExpr:
 
-            # Setting a prop, check if prop exists
+            # Setting a prop ... bind the property symbol so we can type check it
             let propName = subnode[0]
             let propValue = subnode[1]
+            # let componentSymbol = bindSym("type " &componentType, brOpen)
+            # echo componentSymbol.repr
+            # let propFieldSymbol = bindSym($componentType & "()." & $propName)
+            # echo propFieldSymbol.repr
+
+            # Set the prop
             outputNode.add(quote do:
                 `varName`.`propName` = `propValue`
             )
@@ -106,41 +108,36 @@ macro reactiveUi*(body: untyped): untyped =
     traverseClassStatementList body, proc(idx: int, parent: NimNode, node: NimNode) =
         
         # Add all call statements
-        if node.kind == nnkCall:
+        if node.kind == nnkCall or node.kind == nnkObjConstr:
             rootCalls.add(node)
 
     # Check how many items
+    var output: NimNode = nil
     if rootCalls.len() == 0:
 
         # Nothing, render an empty group
-        let output = quote do:
+        output = quote do:
             Group.init()
-
-        # Done
-        return output
 
     elif rootCalls.len() == 1:
 
         # Only a single root entity
         # Create output block
         let blockBody = newStmtList()
-        let output = newBlockStmt(blockBody)
+        output = newBlockStmt(blockBody)
 
         # Convert root nodes
         convertCallToComponentCreation(rootCalls[0], blockBody)
 
         # Finally, output the group
-        blockBody.add(ident"root")        
-
-        # Done
-        return output
+        blockBody.add(ident"root")
 
     else:
 
         # Only a single root entity
         # Create output block
         let blockBody = newStmtList()
-        let output = newBlockStmt(blockBody)
+        output = newBlockStmt(blockBody)
 
         # Create group component
         let input = quote do:
@@ -153,5 +150,5 @@ macro reactiveUi*(body: untyped): untyped =
         # Finally, output the group
         blockBody.add(ident"root")        
 
-        # Done
-        return output
+    # Done
+    return output

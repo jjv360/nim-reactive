@@ -48,6 +48,13 @@ when defined(js) and defined(ReactivePlatformWeb):
     # Register our platform as the active build platform
     ReactivePlugins.shared.activePlatformID = "web"
 
+    ## Base class for web layouts
+    class WebLayout of BaseLayout:
+
+        ## Perform the layout
+        method update(component: BaseComponent) = echo "Shouldn't see this"
+        
+
     ## Base class for web components
     class Component of BaseComponent:
 
@@ -81,6 +88,14 @@ when defined(js) and defined(ReactivePlatformWeb):
         
             # Mount to parent element
             this.parentElement.appendChild(this.element)
+
+
+        ## Called when the layout changes
+        method onPlatformLayout() =
+
+            # Call layout if it exists
+            if this.layout != nil and this.layout of WebLayout:
+                WebLayout(this.layout).update(this)
 
 
         # On unmount
@@ -184,6 +199,33 @@ when defined(js) and defined(ReactivePlatformWeb):
 
             # Register events
             if this.onClick != nil: this.element.onClick = proc(_: Event) = this.onClick()
+
+    
+    ##
+    ## Absolute layout. This layout system simply moves the object to an absolute position within it's parent.
+    class AbsoluteLayout of WebLayout:
+
+        ## Coordinates. Examples are: "32px", "50%".
+        var x = ""
+        var y = ""
+        var width = ""
+        var height = ""
+
+        ## Perform the layout
+        method update(component: BaseComponent) =
+            
+            # Get element
+            let element = Component(component).element
+            if element == nil:
+                return
+
+            # Set layout
+            element.style.setProperty("position", "absolute")
+            element.style.setProperty("left", this.x)
+            element.style.setProperty("top", this.y)
+            element.style.setProperty("width", this.width)
+            element.style.setProperty("height", this.height)
+            
             
 
 
