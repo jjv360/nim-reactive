@@ -16,7 +16,7 @@ This is a cross-platform app framework which takes inspiration from React-Native
 
 **Step 1:** Create a new Nim project. Run `nimble init <projectName>` to create a nim **library** (not a binary) project.
 
-**Step 2:** Add Reactive dependency. Copy this into the end of your .nimble file:
+**Step 2:** Add Reactive dependency. Copy this into the end of your .nimble file, and then run `nimble install --onlyDeps`:
 
 ```nim
 # Dependency section
@@ -24,13 +24,12 @@ requires "https://github.com/jjv360/nim-reactive >= 0.1.2"
 requires "https://github.com/jjv360/nim-reactive-web >= 0.1.0"
 
 # Reactive task ... ensures dependencies are installed and forwards commands to Reactive
-import os
+import os, sequtils
 task reactive, "Reactive action":
-    var params = @[gorge("nimble path reactive").strip() & "/reactive"]; var foundSeparator = false
-    for param in commandLineParams():
-        if foundSeparator: params.add(param)
-        if param == "reactive": foundSeparator = true
-    exec "nimble install -y"; exec params.quoteShellCommand
+    template reactiveExe(): string = (gorge("nimble path reactive").strip() & "/reactive_task").toExe()
+    if not fileExists(reactiveExe): exec "nimble install --depsOnly -y"
+    if not fileExists(reactiveExe): raiseAssert("Unable to find the Reactive binary!")
+    exec @[reactiveExe, "--reactive-project-root:" & thisDir()].concat(commandLineParams()).quoteShellCommand()
 ```
 
 **Step 3:** That's it! Now you can run `nimble reactive web path/to/app.nim` to build your app for `web`.

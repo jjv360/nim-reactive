@@ -27,11 +27,11 @@ macro reactiveAutoImport() =
 
     # Import classes which are always used
     result.add(quote do:
-        import reactive/config
-        import reactive/components
-        import reactive/plugins
-        import reactive/reactiveUi
-        import reactive/timers
+        import reactivepkg/config
+        import reactivepkg/components
+        import reactivepkg/plugins
+        import reactivepkg/reactiveUi
+        import reactivepkg/timers
         export config, components, plugins,reactiveUi, timers
     )
 
@@ -42,7 +42,7 @@ macro reactiveAutoImport() =
     # )
 
     # Import all external plugins ... read the requires section of the app's nimble config
-    echo callsite.repr
+    echo callsite().repr
     echo gorge("nimble dump --json").strip()
     let requiresList = gorge("nimble dump --json").strip().parseJson()["requires"]
     for requireItem in requiresList.items:

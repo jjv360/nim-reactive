@@ -1,14 +1,12 @@
-import strformat
-
 # Package
 
-version       = "0.1.3"
-author        = "jjv360"
-description   = "Cross-platform app development framework"
-license       = "MIT"
-srcDir        = "src"
-installExt    = @["nim"]
-namedBin      = @{"reactive/cli": "reactive"}.toTable
+version                     = "0.1.4"
+author                      = "jjv360"
+description                 = "Cross-platform app development framework"
+license                     = "MIT"
+srcDir                      = "src"
+installExt                  = @["nim", "nims"]
+namedBin["reactivepkg/cli"] = "reactive_task"
 
 
 # Dependencies
@@ -17,3 +15,30 @@ requires "nim >= 1.6.2"
 requires "classes >= 0.2.12"
 requires "docopt >= 0.6.7"
 requires "regex >= 0.19.0"
+
+
+
+# Dev task, forwards commands to an app in the examples folder
+import os, sequtils
+task reactiveExample, "Build an example app, installing all dependencies locally":
+
+    # Install plugins
+    withDir thisDir() / "platforms" / "web": exec "nimble install -y"
+
+    # Install main
+    withDir thisDir(): exec "nimble install -y"
+
+    # Find command line args
+    var params: seq[string]
+    var foundSeparator = false
+    for param in commandLineParams():
+        if foundSeparator: params.add(param)
+        if param == "buildExample": foundSeparator = true
+
+    # Get example name
+    var exampleName = params[0]
+    params = params[1 .. params.len()-1]
+
+    # Pass on command to the example app
+    withDir thisDir() / "examples" / exampleName:
+        exec @["nimble", "reactive"].concat(params).quoteShellCommand
