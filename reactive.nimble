@@ -13,7 +13,7 @@ namedBin["reactivepkg/cli"] = "reactive_task"
 
 requires "nim >= 1.6.2"
 requires "classes >= 0.2.12"
-requires "docopt >= 0.6.7"
+requires "argparse >= 2.0.1"
 requires "regex >= 0.19.0"
 
 
@@ -25,6 +25,7 @@ task reactiveExample, "Build an example app, installing all dependencies locally
     # TODO: Use `nimble develop` for this?? This is not working well
     # Install plugins
     withDir thisDir() / "platforms" / "web": exec "nimble install -y"
+    withDir thisDir() / "platforms" / "win32": exec "nimble install -y"
 
     # Install main
     withDir thisDir(): exec "nimble install -y"

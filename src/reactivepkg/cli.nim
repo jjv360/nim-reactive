@@ -2,7 +2,7 @@ import os, osproc
 import strformat
 import sequtils
 import strutils
-import docopt
+import argparse
 import json
 import sugar
 
@@ -62,30 +62,34 @@ proc `or` (x: string, y: string): string = return if x == "" or x == "nil": y el
 
 
 ## Command line documentation
-const doc = """
-Nim Reactive - a framework for building cross-platform apps in Nim.
+# const doc = """
+# Nim Reactive - a framework for building cross-platform apps in Nim.
 
-Usage:
-    nimble reactive
-    nimble reactive help
-    nimble reactive build [--platform=<id>]
-    nimble reactive (-h | --help)
-    nimble reactive --version
+# Usage:
+#     nimble reactive
+#     nimble reactive help
+#     nimble reactive build
 
-Actions:
-    help            Shows this help information.
-    build           (Default) Builds your app
+# Actions:
+#     help            Shows this help information.
+#     build           (Default) Builds your app
 
-Options:
-    --version       Show version.
-    --platform=<id> Specify a platform target. Defaults to "web".
-""".strip()
+# Options:
+#     --version       Show version.
+#     --platform:<p>  Specify a platform target. Defaults to "web".
+# """.strip()
+
 
 # Extract injected vars
-var projectRoot = ""
-for param in commandLineParams():
-    if param.startsWith("--reactive-project-root:"):
-        projectRoot = param.substr(24)
+# var projectRoot = ""
+# for param in commandLineParams():
+#     if param.startsWith("--reactive-project-root:"):
+#         projectRoot = param.substr(24)
+
+
+# Get project root, which is the current working directory. The nimble script which runs us ensures we are
+# in the correct directory, so we don't have to make sure here.
+let projectRoot = absolutePath(getCurrentDir())
 
 
 # We have been passed unsanitized params that were passed to `nimble reactive xxx`, so filter out the ones that come before our task
@@ -96,45 +100,96 @@ for param in commandLineParams():
     if param == "reactive": foundSeparator = true
 
 
+# Insert default param
+if params.len() == 0 or (params.len() > 0 and params[0].startsWith("--")):
+    params = @["build"].concat(params)
+
+# Create cmdline parser
+let cmdline = newParser:
+
+    # About command
+    command("about"):
+        run:
+            echo "Nim Reactive task"
+
+    # Build command (default)
+    command("build"):
+        # option("-p", "--platform", default=some("web"), help="Specify a platform target. Defaults to 'web'.")
+        arg("platform", default=some("web"))
+        run:
+
+            # Create configuration for the platform binary
+            let buildInfo = %* {
+                "action": "build",
+                "projectRoot": projectRoot,
+                "entrypoint": findEntrypointFile(projectRoot),
+                "extraBuildFlags": [
+                    "--define:ReactiveProjectRoot:" & projectRoot
+                ]
+            }
+
+            # Minify the JSON
+            var buildInfoStr = ""
+            toUgly(buildInfoStr, buildInfo)
+
+            # Get command to execute
+            let cmd = @[pathToPlatformBinary(opts.platform), "--buildinfo:" & buildInfoStr].quoteShellCommand
+
+            # Run the platform binary, and quit with the same exit code
+            echo "Running command: " & cmd
+            quit(execShellCmd(cmd))
+
+
+# Run command line
+try:
+    echo "Running with params: " & params.join(" ")
+    echo "Running with params: " & commandLineParams().join(" ")
+    cmdline.run(params)
+except UsageError as e:
+    stderr.writeLine getCurrentExceptionMsg()
+    quit(1)
+
 # Parse command line
-let args = docopt(doc, version = "Reactive vX.X (TODO)", argv = @["reactive"].concat(params))
+# echo params
+# let args = docopt(doc, version = "Reactive vX.X (TODO)", argv = @["reactive"].concat(params))
+# echo args
 
 
-# Check if in dev mode ... this just installs the submodules locally so we don't have to commit to git every time
-# if fileExists(projectRoot / ".." / ".." / "reactive.nimble"):
+# # Check if in dev mode ... this just installs the submodules locally so we don't have to commit to git every time
+# # if fileExists(projectRoot / ".." / ".." / "reactive.nimble"):
     
-#     # Install inline dependencies
-#     echo "Detected Reactive is in dev mode! Installing local dependencies..."
-#     withDir(projectRoot / ".." / ".." / "platforms" / "web"): assert 0 == execShellCmd("nimble install -y")
-#     withDir(projectRoot / ".." / ".."): assert 0 == execShellCmd("nimble install -y")
+# #     # Install inline dependencies
+# #     echo "Detected Reactive is in dev mode! Installing local dependencies..."
+# #     withDir(projectRoot / ".." / ".." / "platforms" / "web"): assert 0 == execShellCmd("nimble install -y")
+# #     withDir(projectRoot / ".." / ".."): assert 0 == execShellCmd("nimble install -y")
 
 
-# Check action
-if args["help"]:
+# # Check action
+# if args["help"]:
 
-    # Display help
-    echo doc
+#     # Display help
+#     echo doc
 
-else:
+# else:
     
-    # Create configuration for the platform binary
-    let buildInfo = %* {
-        "action": "build",
-        "projectRoot": projectRoot,
-        "entrypoint": findEntrypointFile(projectRoot),
-        "extraBuildFlags": [
-            "--define:ReactiveProjectRoot:" & projectRoot
-        ]
-    }
+    # # Create configuration for the platform binary
+    # let buildInfo = %* {
+    #     "action": "build",
+    #     "projectRoot": projectRoot,
+    #     "entrypoint": findEntrypointFile(projectRoot),
+    #     "extraBuildFlags": [
+    #         "--define:ReactiveProjectRoot:" & projectRoot
+    #     ]
+    # }
 
-    # Minify the JSON
-    var buildInfoStr = ""
-    toUgly(buildInfoStr, buildInfo)
+    # # Minify the JSON
+    # var buildInfoStr = ""
+    # toUgly(buildInfoStr, buildInfo)
 
-    # Get command to execute
-    let platform = $args["--platform"] or "web"
-    let cmd = @[pathToPlatformBinary(platform), "--buildinfo:" & buildInfoStr].quoteShellCommand
+    # # Get command to execute
+    # let platform = if args["--platform"]: $args["--platform"] else: "web"
+    # let cmd = @[pathToPlatformBinary(platform), "--buildinfo:" & buildInfoStr].quoteShellCommand
 
-    # Run the platform binary, and quit with the same exit code
-    echo "Running command: " & cmd
-    quit(execShellCmd(cmd))
+    # # Run the platform binary, and quit with the same exit code
+    # echo "Running command: " & cmd
+    # quit(execShellCmd(cmd))

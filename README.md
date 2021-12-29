@@ -29,7 +29,7 @@ task reactive, "Reactive action":
     template reactiveExe(): string = (gorge("nimble path reactive").strip() & "/reactive_task").toExe()
     if not fileExists(reactiveExe): exec "nimble install --depsOnly -y"
     if not fileExists(reactiveExe): raiseAssert("Unable to find the Reactive binary!")
-    exec @[reactiveExe, "--reactive-project-root:" & thisDir()].concat(commandLineParams()).quoteShellCommand()
+    withDir(thisDir()): exec @[reactiveExe].concat(commandLineParams()).quoteShellCommand()
 ```
 
 **Step 3:** That's it! Now you can run `nimble reactive` to build your app.
