@@ -1,3 +1,6 @@
 [submodule "examples/calculator"]
 	path = examples/calculator
 	url = https://github.com/jjv360/nim-reactive-calculator
+[submodule "platforms/web"]
+	path = platforms/web
+	url = https://github.com/jjv360/nim-reactive-web

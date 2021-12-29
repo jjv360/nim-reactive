@@ -21,6 +21,7 @@ This is a cross-platform app framework which takes inspiration from React-Native
 ```nim
 # Dependency section
 requires "https://github.com/jjv360/nim-reactive >= 0.1.2"
+requires "https://github.com/jjv360/nim-reactive-web >= 0.1.0"
 
 # Reactive task ... ensures dependencies are installed and forwards commands to Reactive
 import os

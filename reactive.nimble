@@ -2,21 +2,13 @@ import strformat
 
 # Package
 
-version       = "0.1.2"
+version       = "0.1.3"
 author        = "jjv360"
 description   = "Cross-platform app development framework"
 license       = "MIT"
 srcDir        = "src"
 installExt    = @["nim"]
-namedBin      = @{
-
-    # Main binary
-    "reactive": "reactive",
-
-    # Built-in platform plugins
-    "reactivepkg/plugins/web": "reactive_platform_web"
-    
-}.toTable
+namedBin      = @{"reactive/cli": "reactive"}.toTable
 
 
 # Dependencies

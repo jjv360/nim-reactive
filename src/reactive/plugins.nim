@@ -1,6 +1,3 @@
-##
-## Contains the plugin registry
-
 import classes
 import std/sequtils
 
@@ -21,7 +18,7 @@ singleton ReactivePlugins:
     var all: seq[ReactivePlugin]
 
     ## Active platform ID
-    var activePlatformID = "unknown"
+    var activePlatformID = ""
 
     ## Register a plugin
     method register(plugin: ReactivePlugin) =
@@ -32,6 +29,10 @@ singleton ReactivePlugins:
 
     ## Get active platform plugin
     method activePlatformPlugin(): ReactivePlugin =
+
+        # Stop if no plugin has become active
+        if this.activePlatformID == "":
+            raiseAssert("There is no active platform selected.")
 
         # Find it
         let filtered = this.all.filterIt(it.providesPlatformID() == this.activePlatformID)
