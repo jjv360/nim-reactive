@@ -21,19 +21,19 @@ template withDir*(dir: string, body: untyped): untyped =
 # Find path to a platform binary
 proc pathToPlatformBinary(platformID: string): string =
 
+    # Try search for an external platform plugin
+    var exe = execProcess(fmt"nimble path reactive_platform_{platformID}").strip() / fmt"reactive_platform_{platformID}.out"
+    if fileExists(exe):
+        return exe
+
+    # Try search for built-in platform plugin
+    exe = execProcess("nimble path reactive").strip() / fmt"reactive_platform_{platformID}.out"
+    if fileExists(exe):
+        return exe
+
     # Try find the exe on the path
-    var exe = findExe("reactive_platform_" & platformID)
+    exe = findExe("reactive_platform_" & platformID)
     if exe != "":
-        return exe
-
-    # Not found, try search for built-in platform plugin
-    exe = execProcess("nimble path reactive").strip() / fmt"reactive_platform_{platformID}"
-    if fileExists(exe):
-        return exe
-
-    # Not found, try search for an external platform plugin
-    exe = execProcess(fmt"nimble path reactive_platform_{platformID}").strip() / fmt"reactive_platform_{platformID}"
-    if fileExists(exe):
         return exe
 
     # Still not found!
@@ -49,7 +49,7 @@ proc findEntrypointFile(projectRoot: string): string =
     if nimbleFiles.len() >= 2: raiseAssert("Too many .nimble files in the project root: " & projectRoot)
 
     # Get library name
-    let libName = nimbleFiles[0].substr(0, nimbleFiles[0].len() - 7)
+    let libName = nimbleFiles[0].splitFile().name
 
     # Get source file path
     let sourcePath = absolutePath(projectRoot / "src" / fmt"{libName}.nim")
@@ -58,7 +58,7 @@ proc findEntrypointFile(projectRoot: string): string =
 
 
 # Check a string, if empty use the other
-proc `or` (x: string, y: string): string = return if x.len() == 0: y else: x
+proc `or` (x: string, y: string): string = return if x == "" or x == "nil": y else: x
 
 
 ## Command line documentation
@@ -66,15 +66,17 @@ const doc = """
 Nim Reactive - a framework for building cross-platform apps in Nim.
 
 Usage:
-    nimble reactive <action> [--platform=<id>]
-    reactive (-h | --help)
-    reactive --version
+    nimble reactive
+    nimble reactive help
+    nimble reactive build [--platform=<id>]
+    nimble reactive (-h | --help)
+    nimble reactive --version
 
 Actions:
+    help            Shows this help information.
     build           (Default) Builds your app
 
 Options:
-    -h --help       Show this screen.
     --version       Show version.
     --platform=<id> Specify a platform target. Defaults to "web".
 """.strip()
@@ -95,8 +97,7 @@ for param in commandLineParams():
 
 
 # Parse command line
-# const version = slurp()
-let args = docopt(doc, version = "Reactive vX.X (TODO)")
+let args = docopt(doc, version = "Reactive vX.X (TODO)", argv = @["reactive"].concat(params))
 
 
 # Check if in dev mode ... this just installs the submodules locally so we don't have to commit to git every time
@@ -109,17 +110,21 @@ let args = docopt(doc, version = "Reactive vX.X (TODO)")
 
 
 # Check action
-if args["xxxxxx"]:
+if args["help"]:
 
-    ## Other actions
+    # Display help
+    echo doc
 
 else:
-
-    # Build action ... create configuration for the platform binary
+    
+    # Create configuration for the platform binary
     let buildInfo = %* {
         "action": "build",
         "projectRoot": projectRoot,
-        "entrypoint": findEntrypointFile(projectRoot)
+        "entrypoint": findEntrypointFile(projectRoot),
+        "extraBuildFlags": [
+            "--define:ReactiveProjectRoot:" & projectRoot
+        ]
     }
 
     # Minify the JSON

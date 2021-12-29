@@ -9,7 +9,12 @@ import std/strutils
 singleton ReactiveConfig:
 
     ## Field values
-    var config: Table[string, string]
+    var config: Table[string, string] = {
+
+        # Use the window that has `registerAs "main"` as the default entry window.
+        "all:mainwindow": "main"
+
+    }.toTable
 
     ## Get a config option
     method get(platformID: string, key: string): string =

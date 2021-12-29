@@ -3,12 +3,14 @@
 
 import macros
 import std/strutils
+import std/sequtils
 import std/json
 
-# List of registered plugins
-var registeredPlugins {.compileTime.}: seq[string]
+# Compile-time arguments injected by the compiler
+const ReactiveProjectRoot {.strdefine.} = ""
+const ReactiveInjectImports {.strdefine.} = ""
 
-# Macro to auto-import submodules
+# Macro to auto-import internal and external plugins
 macro reactiveAutoImport() =
 
     # Create output
@@ -32,7 +34,7 @@ macro reactiveAutoImport() =
         import reactivepkg/plugins
         import reactivepkg/reactiveUi
         import reactivepkg/timers
-        export config, components, plugins,reactiveUi, timers
+        export config, components, plugins, reactiveUi, timers
     )
 
     # Import all builtin plugins
@@ -41,12 +43,13 @@ macro reactiveAutoImport() =
     #     export web
     # )
 
-    # Import all external plugins ... read the requires section of the app's nimble config
-    echo callsite().repr
-    echo gorge("nimble dump --json").strip()
-    let requiresList = gorge("nimble dump --json").strip().parseJson()["requires"]
-    for requireItem in requiresList.items:
-        echo "Importing: " & $requireItem["name"]
+    # Import all injected plugins
+    for pluginName in ReactiveInjectImports.split("|").filterIt(it != ""):
+        let pluginIdent = ident(pluginName)
+        result.add(quote do: 
+            import `pluginIdent`
+            export `pluginIdent`
+        )
 
 
 # Auto import now
@@ -54,46 +57,18 @@ reactiveAutoImport()
 
 
 ## App entry point
-template Reactive*(body: untyped) =
+proc startReactiveApp*() =
 
-    # Create namespace function
-    proc reactiveAppInit() =
+    # Start the platform plugin. 
+    ReactivePlugins.shared.activePlatformPlugin.onPlatformStartup()
 
-        # Current platform ID
-        var reactiveInitCurrentPlatformID = "all"
+    # Run async dispatch loop forever
+    when defined(js):
 
-        # Platform just sets the current platform ID
-        proc platform(platformID: string, body2: proc()) =
-            reactiveInitCurrentPlatformID = platformID
-            body2()
-            reactiveInitCurrentPlatformID = "all"
+        # Javascript does not need to run forever
+        discard
 
-        # Config sets a config option
-        proc config(name: string, value: string) =
-            ReactiveConfig.shared.put(reactiveInitCurrentPlatformID, name, value)
+    else:
 
-        # Run their code
-        body
-
-        # Echo config out
-        # echo "=== ReactiveConfigStart ==="
-        # for key, value in reactiveGlobalConfig.mpairs:
-        #     echo key & " = " & value
-        # echo "=== ReactiveConfigEnd"
-
-        # Start the platform plugin. 
-        ReactivePlugins.shared.activePlatformPlugin.onPlatformStartup()
-
-        # Run async dispatch loop forever
-        when defined(js):
-
-            # Javascript does not need to run forever
-            discard
-
-        else:
-
-            # For native code, we need to run the asyncdispatch loop forever to prevent the app from exiting
-            runForever()
-
-    # Run it
-    reactiveAppInit()
+        # For native code, we need to run the asyncdispatch loop forever to prevent the app from exiting and to handle events
+        runForever()

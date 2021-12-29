@@ -1,6 +1,6 @@
 # Package
 
-version                     = "0.1.4"
+version                     = "0.1.5"
 author                      = "jjv360"
 description                 = "Cross-platform app development framework"
 license                     = "MIT"
@@ -22,6 +22,7 @@ requires "regex >= 0.19.0"
 import os, sequtils
 task reactiveExample, "Build an example app, installing all dependencies locally":
 
+    # TODO: Use `nimble develop` for this?? This is not working well
     # Install plugins
     withDir thisDir() / "platforms" / "web": exec "nimble install -y"
 
@@ -33,7 +34,7 @@ task reactiveExample, "Build an example app, installing all dependencies locally
     var foundSeparator = false
     for param in commandLineParams():
         if foundSeparator: params.add(param)
-        if param == "buildExample": foundSeparator = true
+        if param == "reactiveExample": foundSeparator = true
 
     # Get example name
     var exampleName = params[0]
