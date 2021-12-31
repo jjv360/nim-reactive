@@ -4,3 +4,6 @@
 [submodule "platforms/web"]
 	path = platforms/web
 	url = https://github.com/jjv360/nim-reactive-web
+[submodule "platforms/win32"]
+	path = platforms/win32
+	url = https://github.com/jjv360/nim-reactive-win32
