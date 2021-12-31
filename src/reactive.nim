@@ -7,7 +7,6 @@ import std/sequtils
 import std/json
 
 # Compile-time arguments injected by the compiler
-const ReactiveProjectRoot {.strdefine.} = ""
 const ReactiveInjectImports {.strdefine.} = ""
 
 # Macro to auto-import internal and external plugins
@@ -44,31 +43,39 @@ macro reactiveAutoImport() =
     # )
 
     # Import all injected plugins
-    for pluginName in ReactiveInjectImports.split("|").filterIt(it != ""):
+    for pluginName in ReactiveInjectImports.split(",").filterIt(it != ""):
         let pluginIdent = ident(pluginName)
         result.add(quote do: 
             import `pluginIdent`
             export `pluginIdent`
         )
 
+    # Workaround: Autocomplete doesn't work since the app is built using a standard Nim build command. This means no platform plugins are injected...
+    # So we can now just import a default plugin for the autocomplete process to use
+    when not defined(ReactiveInjectImports):
+        result.add(quote do:
+            import reactive_platform_win32
+            export reactive_platform_win32
+        )
+
 
 # Auto import now
 reactiveAutoImport()
 
-
 ## App entry point
-proc startReactiveApp*() =
+template startReactiveApp*(body: untyped) =
 
-    # Start the platform plugin. 
-    ReactivePlugins.shared.activePlatformPlugin.onPlatformStartup()
+    # Call the prepare function that has been exported by the platform plugin
+    prepareReactiveAppPlatform()
 
-    # Run async dispatch loop forever
-    when defined(js):
+    # Run the app's startup code
+    `body`
 
-        # Javascript does not need to run forever
+    # Call the start function that has been exported by the platform plugin
+    startReactiveAppPlatform()
+
+
+## App entry point without a body
+template startReactiveApp*() =
+    startReactiveApp:
         discard
-
-    else:
-
-        # For native code, we need to run the asyncdispatch loop forever to prevent the app from exiting and to handle events
-        runForever()

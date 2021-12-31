@@ -1,4 +1,4 @@
 {
-    "image": "nimlang/nim",
+    "build": { "dockerfile": "Dockerfile" },
     "extensions": ["kosz78.nim"]
 }

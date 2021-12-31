@@ -2,9 +2,9 @@ import os, osproc
 import strformat
 import sequtils
 import strutils
-import argparse
 import json
 import sugar
+import tables
 
 
 # Do an operation in the specified working directory
@@ -62,134 +62,95 @@ proc `or` (x: string, y: string): string = return if x == "" or x == "nil": y el
 
 
 ## Command line documentation
-# const doc = """
-# Nim Reactive - a framework for building cross-platform apps in Nim.
+const doc = """
+Nim Reactive - a framework for building cross-platform apps in Nim.
 
-# Usage:
-#     nimble reactive
-#     nimble reactive help
-#     nimble reactive build
+Usage:
+    nimble reactive
+    nimble reactive help
+    nimble reactive build
 
-# Actions:
-#     help            Shows this help information.
-#     build           (Default) Builds your app
+Actions:
+    help            Shows this help information.
+    build           (Default) Builds your app
 
-# Options:
-#     --version       Show version.
-#     --platform:<p>  Specify a platform target. Defaults to "web".
-# """.strip()
+Options:
+    --version       Show version.
+    --platform:<p>  Specify a platform target. Defaults to "web".
+""".strip()
+
+# Process command line args
+var foundSeparator = false
+var action = ""
+var cmdlineParams: Table[string, string]
+for param in commandLineParams():
+
+    # We have been passed unsanitized params that were passed to `nimble reactive xxx`, so filter out the ones that come before our task
+    if not foundSeparator:
+        if param == "reactive": foundSeparator = true
+        continue
+
+    # Check param type
+    if param.startsWith("--"):
+
+        # We found a flag, separate it into key:val
+        var sepIdx = param.find(":")
+        if sepIdx == -1: sepIdx = param.find("=")
+        if sepIdx == -1:
+
+            # This is a flag, default to "true"
+            let key = param[2 .. param.high].toLowerAscii()
+            let value = "true"
+            cmdlineParams[key] = value
+
+        else:
+
+            # This is an argument, store it
+            let key = param[2 .. sepIdx-1].toLowerAscii()
+            let value = param[sepIdx+1 .. param.high]
+            cmdlineParams[key] = value
+
+    else:
+
+        # Build command, only one is supported
+        if action != "": raiseAssert("Only one command can be specified.")
+        action = param.toLowerAscii()
 
 
-# Extract injected vars
-# var projectRoot = ""
-# for param in commandLineParams():
-#     if param.startsWith("--reactive-project-root:"):
-#         projectRoot = param.substr(24)
+# Set defaults
+if not cmdlineParams.contains("platform"): cmdlineParams["platform"] = "web"
 
 
 # Get project root, which is the current working directory. The nimble script which runs us ensures we are
 # in the correct directory, so we don't have to make sure here.
 let projectRoot = absolutePath(getCurrentDir())
 
+## Check what to do
+if cmdlineParams.contains("help"):
 
-# We have been passed unsanitized params that were passed to `nimble reactive xxx`, so filter out the ones that come before our task
-var params: seq[string]
-var foundSeparator = false
-for param in commandLineParams():
-    if foundSeparator: params.add(param)
-    if param == "reactive": foundSeparator = true
+    # Show help text
+    echo doc
 
+elif action == "build":
 
-# Insert default param
-if params.len() == 0 or (params.len() > 0 and params[0].startsWith("--")):
-    params = @["build"].concat(params)
+    # Create configuration for the platform binary
+    let buildInfo = %* {
+        "action": "build",
+        "projectRoot": projectRoot,
+        "entrypoint": findEntrypointFile(projectRoot),
+        "cmdline": cmdlineParams,
+        "extraBuildFlags": [
+            "--define:ReactiveProjectRoot:" & projectRoot
+        ],
+    }
 
-# Create cmdline parser
-let cmdline = newParser:
+    # Minify the JSON
+    var buildInfoStr = ""
+    toUgly(buildInfoStr, buildInfo)
 
-    # About command
-    command("about"):
-        run:
-            echo "Nim Reactive task"
+    # Get command to execute
+    let cmd = @[pathToPlatformBinary(cmdlineParams["platform"]), "--buildinfo:" & buildInfoStr].quoteShellCommand
 
-    # Build command (default)
-    command("build"):
-        # option("-p", "--platform", default=some("web"), help="Specify a platform target. Defaults to 'web'.")
-        arg("platform", default=some("web"))
-        run:
-
-            # Create configuration for the platform binary
-            let buildInfo = %* {
-                "action": "build",
-                "projectRoot": projectRoot,
-                "entrypoint": findEntrypointFile(projectRoot),
-                "extraBuildFlags": [
-                    "--define:ReactiveProjectRoot:" & projectRoot
-                ]
-            }
-
-            # Minify the JSON
-            var buildInfoStr = ""
-            toUgly(buildInfoStr, buildInfo)
-
-            # Get command to execute
-            let cmd = @[pathToPlatformBinary(opts.platform), "--buildinfo:" & buildInfoStr].quoteShellCommand
-
-            # Run the platform binary, and quit with the same exit code
-            echo "Running command: " & cmd
-            quit(execShellCmd(cmd))
-
-
-# Run command line
-try:
-    echo "Running with params: " & params.join(" ")
-    echo "Running with params: " & commandLineParams().join(" ")
-    cmdline.run(params)
-except UsageError as e:
-    stderr.writeLine getCurrentExceptionMsg()
-    quit(1)
-
-# Parse command line
-# echo params
-# let args = docopt(doc, version = "Reactive vX.X (TODO)", argv = @["reactive"].concat(params))
-# echo args
-
-
-# # Check if in dev mode ... this just installs the submodules locally so we don't have to commit to git every time
-# # if fileExists(projectRoot / ".." / ".." / "reactive.nimble"):
-    
-# #     # Install inline dependencies
-# #     echo "Detected Reactive is in dev mode! Installing local dependencies..."
-# #     withDir(projectRoot / ".." / ".." / "platforms" / "web"): assert 0 == execShellCmd("nimble install -y")
-# #     withDir(projectRoot / ".." / ".."): assert 0 == execShellCmd("nimble install -y")
-
-
-# # Check action
-# if args["help"]:
-
-#     # Display help
-#     echo doc
-
-# else:
-    
-    # # Create configuration for the platform binary
-    # let buildInfo = %* {
-    #     "action": "build",
-    #     "projectRoot": projectRoot,
-    #     "entrypoint": findEntrypointFile(projectRoot),
-    #     "extraBuildFlags": [
-    #         "--define:ReactiveProjectRoot:" & projectRoot
-    #     ]
-    # }
-
-    # # Minify the JSON
-    # var buildInfoStr = ""
-    # toUgly(buildInfoStr, buildInfo)
-
-    # # Get command to execute
-    # let platform = if args["--platform"]: $args["--platform"] else: "web"
-    # let cmd = @[pathToPlatformBinary(platform), "--buildinfo:" & buildInfoStr].quoteShellCommand
-
-    # # Run the platform binary, and quit with the same exit code
-    # echo "Running command: " & cmd
-    # quit(execShellCmd(cmd))
+    # Run the platform binary, and quit with the same exit code
+    echo "Running command: " & cmd
+    quit(execShellCmd(cmd))

@@ -119,13 +119,13 @@ class BaseComponent:
     var backgroundColor = ""
 
     ## Called when the component is created. Used by platform plugins.
-    method onPlatformCreate() = raiseAssert("The platform plugin must implement onPlatformCreate().")
+    method onPlatformCreate() = discard
 
     ## Called when the component is created but not added to the screen yet. This is not very useful as no properties will be loaded yet. You should use didMount() and willUnmount() instead.
     method didCreate() = discard
 
     ## Called when the component should be mounted by the platform plugin
-    method onPlatformMount() = raiseAssert("The platform plugin must implement onPlatformMount().")
+    method onPlatformMount() = discard
 
     ## Called when the component has been added to the screen
     method didMount() = discard
@@ -146,17 +146,16 @@ class BaseComponent:
     method willUnmount() = discard
 
     ## Called when the component should be unmounted by the platform plugin
-    method onPlatformUnmount() = raiseAssert("The platform plugin must implement onPlatformUnmount().")
+    method onPlatformUnmount() = discard
 
     ## Called when the component is removed from memory
     method willDestroy() = discard
 
     ## Called when the component should be deleted by the platform plugin
-    method onPlatformDestroy() = raiseAssert("The platform plugin must implement onPlatformDestroy().")
+    method onPlatformDestroy() = discard
 
     ## Force a reload of the UI. This calls render() again.
-    method updateUi() =
-        echo "Called updateUi()"
+    method updateUi() = discard
 
     ## Overridden by the app, this controls child components to render.
     method render(): BaseComponent = nil
@@ -182,26 +181,6 @@ class Group of BaseComponent:
     method onPlatformUpdate() = discard
     method onPlatformUnmount() = discard
     method onPlatformDestroy() = discard
-
-
-## A special component which represents pure text.
-class Text of BaseComponent:
-
-    ## Text content
-    var internalTextContent = ""
-
-    ## Placeholders
-    method onPlatformCreate() = discard
-    method onPlatformMount() = discard
-    method onPlatformUpdate() = discard
-    method onPlatformUnmount() = discard
-    method onPlatformDestroy() = discard
-    ## Called when new properties are incoming
-    method updateProperties(newProps: BaseComponent) = 
-        super.updateProperties(newProps)
-
-        # Copy generic props
-        this.internalTextContent = Text(newProps).internalTextContent
 
 
 ## The component database stores references to registered components.

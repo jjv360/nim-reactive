@@ -46,3 +46,6 @@ To setup your environment:
 - Install [VSCode](https://code.visualstudio.com/Download) and [Docker](https://www.docker.com/products/docker-desktop) if you don't have them
 - In VSCode, install the [Remote Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
 - Open this repo in VSCode, then press the two arrows in the bottom-left, and select Reopen in Container. This will then prepare the dev environment for you.
+
+Then, to build the example app:
+- Run `nimble reactiveExample calculator build --platform:web`

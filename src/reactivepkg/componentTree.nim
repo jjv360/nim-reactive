@@ -58,6 +58,10 @@ class ComponentTreeNode:
             this.component.didCreate()
             this.componentIsCreated = true
 
+        # Do layout
+        this.component.onPlatformLayout()
+        this.component.didLayout()
+
         # Special case: Check for group node
         if this.component.isGroupNode:
 
@@ -79,10 +83,6 @@ class ComponentTreeNode:
             this.component.onPlatformMount()
             this.component.didMount()
             this.componentIsMounted = true
-
-        # Do layout
-        this.component.onPlatformLayout()
-        this.component.didLayout()
 
         # Notify updated
         this.component.onPlatformUpdate()

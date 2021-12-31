@@ -15,12 +15,14 @@ proc convertCallToComponentCreation(callNode2: NimNode, outputNode: NimNode, par
     if callNode.kind == nnkCommentStmt:
         return
 
-    # Check node type, it should be a Call
+    # Check node type
     if callNode.kind != nnkCall and callNode.kind != nnkObjConstr:
 
-        # Attempt to get string representation of input
-        callNode = quote do:
-            Text(internalTextContent = $(`callNode`))
+        # Unknown node type! Attempt to get string representation of input and use that as a text node
+        error("Unable to parse UI, expecting a nnkCall or nnkObjConstr, but got a " & $callNode.kind & " instead.", callNode)
+
+    # echo "---"
+    # echo callNode.treeRepr
 
     # Get name for this variable
     var varName = ident("root")

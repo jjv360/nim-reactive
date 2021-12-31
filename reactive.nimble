@@ -1,6 +1,6 @@
 # Package
 
-version                     = "0.1.5"
+version                     = "0.1.6"
 author                      = "jjv360"
 description                 = "Cross-platform app development framework"
 license                     = "MIT"
@@ -13,7 +13,6 @@ namedBin["reactivepkg/cli"] = "reactive_task"
 
 requires "nim >= 1.6.2"
 requires "classes >= 0.2.12"
-requires "argparse >= 2.0.1"
 requires "regex >= 0.19.0"
 
 
