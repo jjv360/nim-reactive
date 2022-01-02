@@ -7,7 +7,7 @@ type AlertIconType* = enum information, warning, question
 # System alert dialog
 proc alert*(text: string, title: string = "", icon: AlertIconType = information) =
 
-    # Ensure GTK is set up
+    # Ensure GTK is set up, just in case the user opens an alert box before the app starts
     InternalInitGTK()
 
     # Create dialog

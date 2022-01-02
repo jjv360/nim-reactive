@@ -17,9 +17,8 @@ class GnomeLayout of BaseLayout:
 ## Base class for all Gnome components
 class Component of BaseComponent:
 
-
-    ## Called when the component is created
-    method onPlatformCreate() = discard
+    ## GTK Widget
+    var gtkWidget: GtkWidget = nil
 
     ## Called when the layout changes
     method onPlatformLayout() =
@@ -41,7 +40,7 @@ class Component of BaseComponent:
 
 
 ## Initialize the GTK app, this must be called before any GTK functions are called.
-var gtkApplication: GtkApplication = nil
+var gtkApplication*: GtkApplication = nil
 proc InternalInitGTK*() =
 
     # Only do once
@@ -57,3 +56,7 @@ proc InternalInitGTK*() =
     echo "[Gnome Platform] Initializing GTK"
     gtk_init(commandLineParams().len(), commandLineParams().mapIt(it.cstring()))
     gtkApplication = gtk_application_new(ReactiveAppInfoAppID, FLAGS_NONE)
+
+    # Make it the default application for this process
+    g_application_set_default(gtkApplication)
+
