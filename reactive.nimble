@@ -1,6 +1,6 @@
 # Package
 
-version                     = "0.1.6"
+version                     = "0.1.7"
 author                      = "jjv360"
 description                 = "Cross-platform app development framework"
 license                     = "MIT"
@@ -25,6 +25,7 @@ task reactiveExample, "Build an example app, installing all dependencies locally
     # Install plugins
     withDir thisDir() / "platforms" / "web": exec "nimble install -y"
     withDir thisDir() / "platforms" / "win32": exec "nimble install -y"
+    withDir thisDir() / "platforms" / "gnome": exec "nimble install -y"
 
     # Install main
     withDir thisDir(): exec "nimble install -y"

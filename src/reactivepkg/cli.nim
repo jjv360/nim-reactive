@@ -120,6 +120,11 @@ for param in commandLineParams():
 # Set defaults
 if not cmdlineParams.contains("platform"): cmdlineParams["platform"] = "web"
 
+# Get app info from nimble task
+if not cmdlineParams.contains("reactive-params"): raiseAssert("Couldn't find --reactive-params flag. Are you sure you are running the binary through the `nimble reactive` task?")
+let appInfo = cmdlineParams["reactive-params"].parseJson()
+cmdlineParams.del("reactive-params")
+
 
 # Get project root, which is the current working directory. The nimble script which runs us ensures we are
 # in the correct directory, so we don't have to make sure here.
@@ -139,8 +144,11 @@ elif action == "build":
         "projectRoot": projectRoot,
         "entrypoint": findEntrypointFile(projectRoot),
         "cmdline": cmdlineParams,
+        "appInfo": appInfo,
         "extraBuildFlags": [
-            "--define:ReactiveProjectRoot:" & projectRoot
+            "--define:ReactiveProjectRoot:" & projectRoot,
+            "--define:ReactiveAppInfoAppID:" & appInfo["appID"].getStr(""),
+            "--define:ReactiveAppInfoTitle:" & appInfo["title"].getStr("")
         ],
     }
 

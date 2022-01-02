@@ -23,13 +23,21 @@ This is a cross-platform app framework which takes inspiration from React-Native
 requires "https://github.com/jjv360/nim-reactive >= 0.1.2"
 requires "https://github.com/jjv360/nim-reactive-web >= 0.1.0"
 
-# Reactive task ... ensures dependencies are installed and forwards commands to Reactive
-import os, sequtils
+# Reactive task
+import os, sequtils, json
 task reactive, "Reactive action":
+
+    # Your app configuration
+    var reactiveParams = %* {
+        "appID": "org.myapp",
+        "title": "My App"
+    }
+
+    # Task runner, don't change this
     template reactiveExe(): string = (gorge("nimble path reactive").strip() & "/reactive_task").toExe()
     if not fileExists(reactiveExe): exec "nimble install --depsOnly -y"
     if not fileExists(reactiveExe): raiseAssert("Unable to find the Reactive binary!")
-    withDir(thisDir()): exec @[reactiveExe].concat(commandLineParams()).quoteShellCommand()
+    withDir(thisDir()): exec @[reactiveExe].concat(commandLineParams()).concat(@["--reactive-params:" & $reactiveParams]).quoteShellCommand()
 ```
 
 **Step 3:** That's it! Now you can run `nimble reactive` to build your app.
