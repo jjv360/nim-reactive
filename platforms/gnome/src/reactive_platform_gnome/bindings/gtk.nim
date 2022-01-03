@@ -31,28 +31,37 @@ fromGTK:
     # Core
     proc gtk_main*()
 
-    # GtkWidget
-    type GtkWidget* = pointer
-    proc gtk_widget_destroy*(self: GtkWidget)
+    # GSignal
+    type GCallback* = pointer   # <-- Function pointer, signal type determines the number of args, etc, so we can't define it properly beforehand
+    type GHandlerID* = uint64
+    proc g_signal_connect*(instance: pointer, detailed_signal: cstring, c_handler: GCallback, data: pointer): GHandlerID
 
     # GApplication
     type GApplication* = pointer
     proc g_application_run*(app: GApplication, argc: int, argv: seq[cstring]): int
     proc g_application_set_default*(app: GApplication)
 
-    # GSignal
-    type GCallback* = pointer   # <-- Function pointer, signal type determines the number of args, etc, so we can't define it properly beforehand
-    type GHandlerID* = uint64
-    proc g_signal_connect*(instance: GtkWidget, detailed_signal: cstring, c_handler: GCallback, data: pointer): GHandlerID
-
-    # GtkApplication
+    # GtkApplication -> GApplication
     type GtkApplication* = GApplication
     type GApplicationFlags* {. pure .} = enum FLAGS_NONE = 0, IS_SERVICE = 1 shl 0, IS_LAUNCHER = 1 shl 1, HANDLES_OPEN = 1 shl 2, HANDLES_COMMAND_LINE = 1 shl 3, SEND_ENVIRONMENT = 1 shl 4, NON_UNIQUE = 1 shl 5, CAN_OVERRIDE_APP_ID = 1 shl 6, ALLOW_REPLACEMENT = 1 shl 7, REPLACE = 1 shl 8
     proc g_application_id_is_valid*(application_id: cstring): bool
     proc gtk_init*(argc: int, argv: seq[cstring])
     proc gtk_application_new*(application_id: cstring, flags: GApplicationFlags): GtkApplication
 
-    # GtkWindow
+    # GtkWidget
+    type GtkWidget* = pointer
+    proc gtk_widget_destroy*(self: GtkWidget)
+    proc gtk_widget_get_parent*(self: GtkWidget): GtkWidget
+    proc gtk_widget_show*(self: GtkWidget)
+    proc gtk_widget_hide*(self: GtkWidget)
+    proc gtk_widget_set_size_request*(self: GtkWidget, x: int, y: int)
+
+    # GtkContainer -> GtkWidget
+    type GtkContainer* = pointer
+    proc gtk_container_add*(self: GtkContainer, widget: GtkWidget)
+    proc gtk_container_remove*(self: GtkContainer, widget: GtkWidget)
+
+    # GtkWindow -> GtkBin -> GtkContainer -> GtkWidget
     type GtkWindow* = pointer
     type GtkWindowType* {. pure .} = enum GTK_WINDOW_TOPLEVEL, GTK_WINDOW_POPUP
     proc gtk_window_set_title*(self: GtkWindow, title: cstring)
@@ -68,3 +77,15 @@ fromGTK:
     type GtkResponseType* {. pure .} = enum GTK_RESPONSE_HELP = -11, GTK_RESPONSE_APPLY = -10, GTK_RESPONSE_NO = -9, GTK_RESPONSE_YES = -8, GTK_RESPONSE_CLOSE = -7, GTK_RESPONSE_CANCEL = -6, GTK_RESPONSE_OK = -5, GTK_RESPONSE_DELETE_EVENT = -4, GTK_RESPONSE_ACCEPT = -3, GTK_RESPONSE_REJECT = -2, GTK_RESPONSE_NONE = -1
     proc gtk_message_dialog_new*(parent: GtkWindow, flags: set[GtkDialogFlags], `type`: GtkMessageType, buttons: GtkButtonsType, message_format: cstring): GtkWidget
     proc gtk_dialog_run*(self: GtkDialog): GtkResponseType
+
+    # GtkButton -> GtkWidget
+    type GtkButton* = GtkWidget
+    proc gtk_button_new*(): GtkButton
+    proc gtk_button_set_label*(self: GtkButton, label: cstring)
+
+    # GtkFixed -> GtkContainer -> GtkWidget
+    type GtkFixed* = GtkContainer
+    proc gtk_fixed_new*(): GtkFixed
+    proc gtk_fixed_move*(self: GtkFixed, child: GtkWidget, x: int, y: int)
+    proc gtk_fixed_put*(self: GtkFixed, child: GtkWidget, x: int, y: int)
+

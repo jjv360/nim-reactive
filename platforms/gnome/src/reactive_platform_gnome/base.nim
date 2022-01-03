@@ -20,6 +20,40 @@ class Component of BaseComponent:
     ## GTK Widget
     var gtkWidget: GtkWidget = nil
 
+    # Get most recent ancestor with a valid GtkWidget
+    method parentWidget(): GtkWidget =
+
+        # Go through heirarchy
+        var item = this.parent
+        while item != nil:
+
+            # Check if this one has a HWND
+            if item of Component and Component(item).gtkWidget != nil:
+                return Component(item).gtkWidget
+
+            # Nope, continue up the chain
+            item = item.parent
+            
+        # Not found
+        return nil
+
+
+    ## Called to mount the component
+    method onPlatformMount() =
+
+        # Check if we have a widget to mount
+        if this.gtkWidget == nil:
+            return
+
+        # Get parent widget
+        let parentWidget = this.parentWidget()
+        if parentWidget == nil:
+            raiseAssert("Unable to find a parent widget to mount our GtkWidget to.")
+
+        ## Add it
+        parentWidget.gtk_container_add(this.gtkWidget)
+
+
     ## Called when the layout changes
     method onPlatformLayout() =
 
@@ -35,8 +69,38 @@ class Component of BaseComponent:
         g.children = this.children
         return g
 
+    
     ## Update UI
     method updateUi() = ComponentTreeNode(this.componentTreeNode).synchronize()
+
+
+    ## Called to unmount the component
+    method onPlatformUnmount() =
+
+        # Check if we have a widget
+        if this.gtkWidget == nil:
+            return
+
+        # Get parent widget
+        let parentWidget = this.gtkWidget.gtk_widget_get_parent()
+        if parentWidget == nil:
+            return
+
+        # Remove it
+        parentWidget.gtk_container_remove(this.gtkWidget)
+
+
+    ## Called to destroy the component
+    method onPlatformDestroy() =
+
+        # Check if we have a widget
+        if this.gtkWidget == nil:
+            return
+
+        # We do, destroy it
+        this.gtkWidget.gtk_widget_destroy()
+        this.gtkWidget = nil
+
 
 
 ## Initialize the GTK app, this must be called before any GTK functions are called.
