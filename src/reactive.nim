@@ -2,27 +2,22 @@
 ## Entry point for the lib
 
 # General stuff
-import reactive/backends
-import reactive/components/basecomponent
-import reactive/utils
-export basecomponent, backends, utils
+import ./reactive/shared/basecomponent
+import ./reactive/shared/componentsDSL
+import ./reactive/shared/utils
+export basecomponent, utils, componentsDSL
 
-# Components
-import reactive/components/window
-export window
+# Platform specific
+when defined(windows):
 
-## Entry point for a Reactive app
-proc reactiveStart*(code: proc()) =
+    # Windows platform
+    import ./reactive/windows/dialogs
+    import ./reactive/windows/window
+    import ./reactive/windows/runloop
+    export dialogs, window, runloop
 
-    # Catch errors
-    reactiveCrashOnError:
+else:
 
-        # Load the backend
-        echo "[Reactive] Starting using backend: " & reactiveBackend.id
-        reactiveBackend.load()
-
-        # Run their code
-        code()
-
-        # Enter the backend's run loop
-        reactiveBackend.start()
+    # Unknown platform
+    static:
+        raiseAssert("NimReactive is not supported for this target.")
