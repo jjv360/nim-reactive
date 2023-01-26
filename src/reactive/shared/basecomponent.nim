@@ -14,90 +14,93 @@ class PropertyItem:
     var procValue: proc() = nil
 
 
+## Convert a string to a PropertyItem
+converter propFromString*(value: string) : PropertyItem =
 
-##
-## Prop bundle, contains a list of key/value properties of multiple types
-class PropertyBundle:
+    # Set string
+    let item = PropertyItem.init()
+    item.stringValue = value
 
-    ## Storage
-    var items : Table[string, PropertyItem]
+    # Set int
+    try:
+        item.intValue = value.parseInt()
+    except CatchableError:
+        discard
 
-    ## Get prop as string or blank if it doesn't exist
-    method str(name: string, default: string = ""): string = 
-        let item = this.items.getOrDefault(name, nil)
-        if item != nil:
-            return item.stringValue
-        else:
-            return default
+    # Set float
+    try:
+        item.floatValue = value.parseFloat()
+    except CatchableError:
+        discard
 
-    ## Get prop as int
-    method int(name: string, default: int = 0): int = 
-        let item = this.items.getOrDefault(name, nil)
-        if item != nil:
-            return item.intValue
-        else:
-            return default
+    # Done
+    return item
 
-    ## Get prop as float
-    method float(name: string, default: float = 0): float = 
-        let item = this.items.getOrDefault(name, nil)
-        if item != nil:
-            return item.floatValue
-        else:
-            return default
+## Convert an int to a PropertyItem
+converter propFromInt*(value: int) : PropertyItem =
+    let item = PropertyItem.init()
+    item.stringValue = $value
+    item.intValue = value
+    item.floatValue = value.toFloat()
+    return item
 
-    ## Get prop as string or blank if it doesn't exist
-    method `[]`(name: string): string = this.str(name)
+## Convert a float to a PropertyItem
+converter propFromFloat*(value: float) : PropertyItem =
+    let item = PropertyItem.init()
+    item.stringValue = $value
+    item.intValue = value.toInt()
+    item.floatValue = value
+    return item
 
-    ## Set string value
-    method `[]=`(name: string, value: string) =
+## Convert a proc to a PropertyItem
+converter propFromProc*(value: proc()) : PropertyItem =
+    let item = PropertyItem.init()
+    item.procValue = value
+    item.stringValue = "<proc>"
+    return item
 
-        # Set string
-        let item = PropertyItem.init()
-        item.stringValue = value
+## Save a proc to a PropertyItem ... this is necessary because the converter from proc doesn't seem to work
+proc `[]=`*(props: var Table[string, PropertyItem], name: string, value: proc()) =
+    let item = PropertyItem.init()
+    item.procValue = value
+    item.stringValue = "<proc>"
+    props[name] = item
 
-        # Set int
-        try:
-            item.intValue = value.parseInt()
-        except CatchableError:
-            discard
+## Convert a PropertyItem to a string
+converter propToString*(item: PropertyItem) : string = 
+    if item == nil: return ""
+    return item.stringValue
 
-        # Set float
-        try:
-            item.floatValue = value.parseFloat()
-        except CatchableError:
-            discard
+## Convert a PropertyItem to a cstring
+converter propToCString*(item: PropertyItem) : cstring = 
+    if item == nil: return ""
+    return item.stringValue.cstring
 
-        # Store it
-        this.items[name] = item
+## Convert a PropertyItem to an int
+converter propToInt*(item: PropertyItem) : int = 
+    if item == nil: return 0
+    return item.intValue
 
-    ## Set int value
-    method `[]=`(name: string, value: int) =
+## Convert a PropertyItem to an int32
+converter propToInt32*(item: PropertyItem) : int32 = 
+    if item == nil: return 0
+    return item.intValue.int32
 
-        # Set values
-        let item = PropertyItem.init()
-        item.stringValue = $value
-        item.intValue = value
-        item.floatValue = value.toFloat()
-        this.items[name] = item
+## Convert a PropertyItem to an int64
+converter propToInt64*(item: PropertyItem) : int64 = 
+    if item == nil: return 0
+    return item.intValue.int64
 
-    ## Set float value
-    method `[]=`(name: string, value: float) =
+## Convert a PropertyItem to a float
+converter propToFloat*(item: PropertyItem) : float =
+    if item == nil: return 0
+    return item.floatValue
 
-        # Set values
-        let item = PropertyItem.init()
-        item.stringValue = $value
-        item.intValue = value.toInt()
-        item.floatValue = value
-        this.items[name] = item
+## Convert a PropertyItem to a proc
+converter propToProc*(item: PropertyItem) : proc() = 
+    if item == nil: return nil
+    return item.procValue
 
-    ## Set proc value
-    method `[]=`(name: string, value: proc()) =
-
-        # Set values
-        let item = PropertyItem.init()
-        item.procValue = value
-        this.items[name] = item
 
 
 ##
@@ -105,21 +108,19 @@ class PropertyBundle:
 class BaseComponent:
 
     ## Component props passed into the compnent at render time
-    var props: PropertyBundle = PropertyBundle.init()
+    var props: Table[string, PropertyItem]
 
     ## Children nodes, if any
     var children: seq[BaseComponent]
 
     ## Component state
-    var state: PropertyBundle = PropertyBundle.init()
+    var state: Table[string, PropertyItem]
 
     ## Render this component ... default implementation just renders children
-    method render(): seq[BaseComponent] = this.children
-
-    ## Start rendering the tree from this Component. Only native components need to implement this.
-    ## This is called by the app when they want to create a new top-level component, such as a
-    ## Window, ContextMenu, etc.
-    method mount() = raiseAssert("This component cannot be mounted.")
+    method render(): BaseComponent =
+        let itm = BaseComponent.init()
+        itm.children = this.children
+        return itm
 
     ## Remove this component from the system if it's mounted
     method unmount() = discard
@@ -140,35 +141,11 @@ class BaseComponent:
 
         # Build string
         var str = this.className() & ":"
-        for key, value in this.props.items.pairs:
-            str = str & " " & key & "=" & value.stringValue
+        for key, value in this.props.pairs:
+            str = str & " " & key & "=" & value
 
         # Done
         return str
-
-
-    
-
-
-    ## Get state as string or blank if it doesn't exist
-    method state(name: string, default: string = ""): string = 
-        return this.state.getOrDefault(name, default)
-
-    ## Get state as int
-    method stateInt(name: string, default: int = 0): int = 
-        try:
-            if not this.state.hasKey(name): return default
-            return this.state.getOrDefault(name).parseInt()
-        except CatchableError:
-            return default
-
-    ## Get state as float
-    method stateFloat(name: string, default: float = 0): float = 
-        try:
-            if not this.state.hasKey(name): return default
-            return this.state.getOrDefault(name).parseFloat()
-        except CatchableError:
-            return default
 
 
 

@@ -3,9 +3,18 @@
 
 # General stuff
 import ./reactive/shared/basecomponent
-import ./reactive/shared/componentsDSL
 import ./reactive/shared/utils
-export basecomponent, utils, componentsDSL
+import ./reactive/shared/mounts
+export basecomponent, utils, mounts
+
+# DSL stuff ... we need to export some other libraries as well so they're available from the macro output
+import ./reactive/shared/componentsDSL
+import std/tables
+import classes
+export componentsDSL, tables, classes
+
+# HTML components
+
 
 # Platform specific
 when defined(windows):

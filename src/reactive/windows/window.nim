@@ -52,14 +52,14 @@ class Window of BaseComponent:
 
         # Create window
         this.hwnd = CreateWindowEx(
-            0,#WS_EX_LAYERED,                      # Extra window styles
+            0,#WS_EX_LAYERED,                   # Extra window styles
             registerWindowClass(),              # Class name
-            this.prop("title"),                 # Window title
+            this.props["title"].cstring,        # Window title
             WS_OVERLAPPEDWINDOW or WS_VISIBLE,  # Window style
 
             # Size and position, x, y, width, height
-            (int32) this.propInt("x"), (int32) this.propInt("y"), 
-            (int32) this.propInt("width"), (int32) this.propInt("height"),
+            this.props["x"], this.props["y"], 
+            this.props["width"], this.props["height"],
 
             0,                                  # Parent window    
             0,                                  # Menu
@@ -160,7 +160,7 @@ class Window of BaseComponent:
 proc wndProcProxy(hwnd: HWND, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {.stdcall.} =
 
     # Find class instance
-    let component = activeHWNDs.getOrDefault(hwnd, nil).WindowHwndHandler()
+    let component = activeHWNDs.getOrDefault(hwnd, nil).Window()
     if component == nil:
 
         # No component associated with this HWND, we don't know where to route this message... Maybe it's a thread message or something? 

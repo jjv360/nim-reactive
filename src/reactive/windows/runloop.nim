@@ -25,7 +25,7 @@ proc reactiveStart*(code: proc()) =
             DispatchMessage(msg)
 
             # Process asyncdispatch's event loop
-            if asyncdispatch.hasPendingOperations():
+            while asyncdispatch.hasPendingOperations():
                 asyncdispatch.poll(0)
         
     except CatchableError as err:
