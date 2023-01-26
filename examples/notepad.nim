@@ -14,8 +14,20 @@ import classes
 # Main app window
 class MainWindow of Window:
 
+    ## Called when the window is created
+    method onMount() =
+
+        echo "Main Window created!"
+
+
+    ## Called when the window is closed
+    method onUnmount() =
+
+        echo "Main window closed"
+
     method render(): BaseComponent = components:
         BaseComponent
+
 
 # Start the app
 reactiveStart: 

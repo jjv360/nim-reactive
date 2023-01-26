@@ -32,7 +32,6 @@ singleton ReactiveMountManager:
             raise ValueError.newException("This component tree is already mounted.")
 
         # Add it
-        echo "[NimReactive] Mounting: " & $component
         this.mountedComponents.add(component)
 
         # Render it
@@ -49,7 +48,6 @@ singleton ReactiveMountManager:
             return
 
         # Remove it
-        echo "[NimReactive] Unmounting: " & $component
         let idx = this.mountedComponents.find(rootComponent)
         if idx != -1:
             this.mountedComponents.del(idx)

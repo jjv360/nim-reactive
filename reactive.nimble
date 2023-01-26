@@ -15,7 +15,7 @@ requires "winim >= 3.9.0"
 
 # Test script
 task test, "Test script":
-    exec "nimcrate --run --target:windows examples/notepad.nim"
+    exec "nimcrate --run examples/notepad.nim"
 
 # Build the CoreFoundation library interop file (only works on Mac with Xcode installed)
 # task buildInteropCoreFoundation, "Build interop for CoreFoundation":
