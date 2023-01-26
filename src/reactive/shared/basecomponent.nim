@@ -101,6 +101,10 @@ converter propToProc*(item: PropertyItem) : proc() =
     if item == nil: return nil
     return item.procValue
 
+## Utility to get an optional value from the property bag
+proc `{}`*(props: Table[string, PropertyItem], key: string): PropertyItem =
+    return props.getOrDefault(key, nil)
+
 
 
 ##
@@ -113,17 +117,21 @@ class BaseComponent:
     ## Children nodes, if any
     var children: seq[BaseComponent]
 
+    ## Parent node, if any
+    var parent: BaseComponent = nil
+
     ## Component state
     var state: Table[string, PropertyItem]
+
+    ## Private state flags
+    var privateHasDoneNativeMount = false
+    var privateHasDoneMount = false
 
     ## Render this component ... default implementation just renders children
     method render(): BaseComponent =
         let itm = BaseComponent.init()
         itm.children = this.children
         return itm
-
-    ## Remove this component from the system if it's mounted
-    method unmount() = discard
 
     ## Debug utility: Print out the component heirarchy from this point
     method printViewHeirarchy(depth: int = 0) =
@@ -139,8 +147,14 @@ class BaseComponent:
     ## String description of this component
     method `$`(): string =
 
-        # Build string
-        var str = this.className() & ":"
+        # Build string, start with component name
+        var str = this.className()
+        
+        # Add separator if it has props
+        if this.props.len > 0:
+            str = str & ":"
+
+        # App props
         for key, value in this.props.pairs:
             str = str & " " & key & "=" & value
 
@@ -148,7 +162,27 @@ class BaseComponent:
         return str
 
 
+    ## Called when the component is first mounted ... this is used by native code to create the necessary UI etc
+    method onNativeMount() = discard
+
+    ## Called when the component has been mounted
+    method onMount() = discard
+
+    ## Called when the component has been unmounted
+    method onUnmount() = discard
+
+    ## Called on unmount
+    method onNativeUnmount() = discard
+
+
+
 
 ##
 ## Group component which simply renders it's children
 class Group of BaseComponent
+
+
+##
+## Utility: Unmount this component
+template unmount*(component: BaseComponent) =
+    ReactiveMountManager.unmount(component)

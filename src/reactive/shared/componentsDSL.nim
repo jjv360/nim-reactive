@@ -80,6 +80,7 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
             let varIdent = gen.varIdent
             code.add(quote do:
                 `nodeVarName`.children.add(`varIdent`)
+                `varIdent`.parent = `nodeVarName`
             )
 
         return (code, nodeVarName)
@@ -145,6 +146,7 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
                 let varIdent = gen.varIdent
                 code.add(quote do:
                     `nodeVarName`.children.add(`varIdent`)
+                    `varIdent`.parent = `nodeVarName`
                 )
 
         return (code, nodeVarName)
@@ -192,6 +194,7 @@ proc componentsConvert(input: NimNode): NimNode =
         let varIdent = gen.varIdent
         output.add(quote do:
             `finalNode`.children.add(`varIdent`)
+            `varIdent`.parent = `finalNode`
         )
 
     # echo input.treeRepr

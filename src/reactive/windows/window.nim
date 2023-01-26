@@ -3,6 +3,7 @@ import classes
 import winim/lean
 import ./dialogs
 import ../shared/basecomponent
+import ../shared/mounts
 
 ## List of all active windows
 var activeHWNDs: Table[HWND, RootRef]
@@ -39,33 +40,28 @@ class Window of BaseComponent:
     ## Backend window info
     var hwnd: HWND = 0
 
-    ## Create a new window
-    method mount() =
+    ## Called when this component is mounted
+    method onNativeMount() =
 
-        # Create a window on the backend
-        # reactiveBackend.createWindow()
-        alert("Showing window")
-
-
-    ## Create HWND
-    method createHwnd() =
-
-        # Create window
+        # Create the native window
         this.hwnd = CreateWindowEx(
             0,#WS_EX_LAYERED,                   # Extra window styles
             registerWindowClass(),              # Class name
-            this.props["title"].cstring,        # Window title
+            this.props{"title"}.cstring,        # Window title
             WS_OVERLAPPEDWINDOW or WS_VISIBLE,  # Window style
 
             # Size and position, x, y, width, height
-            this.props["x"], this.props["y"], 
-            this.props["width"], this.props["height"],
+            this.props{"x"}, this.props{"y"}, 
+            this.props{"width"}, this.props{"height"},
 
             0,                                  # Parent window    
             0,                                  # Menu
             0,                                  # Instance handle
-            cast[pointer](this)                 # Additional application data is a pointer to our class instance ... used by wndProcProxy
+            nil                                 # Additional application data, unused since we're keeping references in `activeHWNDs`
         )
+
+        # Store it
+        activeHWNDs[this.hwnd] = this
 
         # Create graphics memory for the window
         # let screenDC = GetDC(0)
@@ -97,9 +93,11 @@ class Window of BaseComponent:
         # this.p_updateLayeredWindow(hwnd)
 
 
-    ## Destroy the associated HWND
-    method destroyHwnd() = 
-        if this.hwnd != 0: DestroyWindow(this.hwnd)
+    ## Called on unmount
+    method onNativeUnmount() = 
+        if this.hwnd != 0:
+            activeHWNDs.del(this.hwnd)
+            DestroyWindow(this.hwnd)
         this.hwnd = 0
 
 
@@ -120,10 +118,8 @@ class Window of BaseComponent:
 
         elif uMsg == WM_DESTROY:
 
-            # Remove this window from the active window list, it has been destroyed by the system
-            activeHWNDs.del(this.hwnd)
-            this.hwnd = 0
-            return 0
+            # Windows has destroyed our window, unmount this component
+            ReactiveMountManager.shared.unmount(this)
 
         elif uMsg == WM_COMMAND:
 
@@ -152,7 +148,7 @@ class Window of BaseComponent:
 
     ## String description of this component
     method `$`(): string =
-        return super.`$`() & " hwnd=" & $this.hwnd
+        return super.`$`() & " $hwnd=" & $this.hwnd
 
 
 

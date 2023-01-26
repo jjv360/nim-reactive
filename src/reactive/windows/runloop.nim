@@ -1,6 +1,7 @@
 import ./dialogs
 import winim/lean
 import std/asyncdispatch
+import ../shared/mounts
 
 ## Entry point for a Reactive app
 proc reactiveStart*(code: proc()) =
@@ -15,7 +16,7 @@ proc reactiveStart*(code: proc()) =
         code()
 
         # Create Win32 timer so our event loop is running at a minimum of 1ms, this is necessary to allow
-        # asyncdispatch to run alongside the WIn32 event loop in the same thread
+        # asyncdispatch to run alongside the Win32 event loop in the same thread
         SetTimer(0, 0, 1, nil)
 
         # Run the Windows event loop
@@ -25,8 +26,12 @@ proc reactiveStart*(code: proc()) =
             DispatchMessage(msg)
 
             # Process asyncdispatch's event loop
-            while asyncdispatch.hasPendingOperations():
-                asyncdispatch.poll(0)
+            if asyncdispatch.hasPendingOperations():
+                asyncdispatch.drain(1)
+
+            # Quit the app if there's no pending operations on asyncdispatch and there's no rendered windows
+            if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:
+                break
         
     except CatchableError as err:
 
