@@ -13,17 +13,26 @@ import std/tables
 import classes
 export componentsDSL, tables, classes
 
-# HTML components
+# Generic components
+# import ./reactive/components/window
+# export window
 
-
-# Platform specific
+# Platform specific components
 when defined(windows):
 
     # Windows platform
     import ./reactive/windows/dialogs
     import ./reactive/windows/window
     import ./reactive/windows/runloop
-    export dialogs, window, runloop
+    export dialogs, runloop, window
+
+elif defined(macosx):
+
+    # Windows platform
+    import ./reactive/macosx/dialogs
+    import ./reactive/macosx/window
+    import ./reactive/macosx/runloop
+    export dialogs, runloop, window
 
 else:
 

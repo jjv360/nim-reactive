@@ -63,6 +63,9 @@ class Window of BaseComponent:
         # Store it
         activeHWNDs[this.hwnd] = this
 
+        # Create webview window
+
+
         # Create graphics memory for the window
         # let screenDC = GetDC(0)
         # let windowDC = CreateCompatibleDC(screenDC)

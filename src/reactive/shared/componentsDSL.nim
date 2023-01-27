@@ -230,11 +230,11 @@ macro components*(code) =
         return `finalNode`
 
     # Debug
-    echo ""
-    echo ""
-    echo "====== Render:"
-    echo output.repr
-    echo ""
+    # echo ""
+    # echo ""
+    # echo "====== Render:"
+    # echo output.repr
+    # echo ""
 
     # Done
     return output
@@ -262,11 +262,11 @@ macro reactiveMount*(code: untyped) =
         `ReactiveMountManager`.shared.mount(`finalNode`)
 
     # Debug
-    echo ""
-    echo ""
-    echo "====== Mount:"
-    echo output.repr
-    echo ""
+    # echo ""
+    # echo ""
+    # echo "====== Mount:"
+    # echo output.repr
+    # echo ""
 
     # Done
     return output

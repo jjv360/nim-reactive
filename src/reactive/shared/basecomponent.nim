@@ -176,6 +176,37 @@ class BaseComponent:
 
 
 
+##
+## Base class for a native component renderer. The renderer is responsible for converting Components into their native counterparts.
+# class ComponentRenderer:
+
+#     ## Renderer ID
+#     var id = ""
+
+
+
+# ##
+# ## Component class, represents something drawn on screen
+# class Component of BaseComponent:
+
+#     ## Native component renderer, if any.
+#     var nativeRenderer: ComponentRenderer
+
+#     ## Get the nearest component renderer for this component
+#     method getRenderer(): ComponentRenderer =
+
+#         # Check if we have one
+#         if this.nativeRenderer != nil:
+#             return this.nativeRenderer
+
+#         # Check parent
+#         if this.parent != nil:
+#             return this.parent.Component.getRenderer()
+        
+#         # No renderer found for this Component
+#         return nil
+
+
 
 ##
 ## Group component which simply renders it's children
