@@ -8,6 +8,12 @@ import std/asyncdispatch
 import classes
 
 
+## Assets
+const closeIcon = staticDataURI("assets/close.svg")
+const openIcon = staticDataURI("assets/open.svg")
+const saveIcon = staticDataURI("assets/save.svg")
+
+
 ## Menu item
 class MenuItem of Component:
     method render(): Component = components:
@@ -27,7 +33,6 @@ class BarIcon of Component:
     ## RenderReactivePropertyItem(stringValue: this.props{"text"}, isString: true)
     method render(): Component = components:
         Div(
-            text: this.props{"text"}, 
             onClick: this.props{"onClick"},
             onMouseOver: proc() =
                 this.isHovering = true
@@ -37,9 +42,13 @@ class BarIcon of Component:
                 this.isHovering = false
                 this.renderAgain()
             ,
-            padding: "17px 12px", 
+            width: 40, 
             height: "100%",
             boxSizing: "border-box",
+            backgroundImage: "url('" & this.props{"icon"} & "')",
+            backgroundPosition: "center",
+            backgroundSize: "16px 16px",
+            backgroundRepeat: "no-repeat",
             backgroundColor: if this.isHovering: "rgba(0, 0, 0, 0.1)" else: "transparent"
         )
 
@@ -85,14 +94,14 @@ class App of Component:
             Div(backgroundColor: "#f5efc9", position: "absolute", top: 0, left: 0, width: "100%", height: "100%")
 
             # Header
-            Div(backgroundColor: "rgba(0, 0, 0, 0.1)", position: "absolute", top: 0, left: 0, width: "100%", height: 50, display: "flex", alignItems: "center", borderBottom: "1px solid rgba(0, 0, 0, 0.1)"):
-                BarIcon(text: "Load")
-                BarIcon(text: "Save")
+            Div(backgroundColor: "rgba(0, 0, 0, 0.1)", position: "absolute", top: 0, left: 0, width: "100%", height: 40, display: "flex", alignItems: "center", borderBottom: "1px solid rgba(0, 0, 0, 0.1)"):
+                BarIcon(icon: openIcon)
+                BarIcon(icon: saveIcon)
                 Div(flex: "1 1 auto")
-                BarIcon(text: "Close", onClick: proc() = this.unmount())
+                BarIcon(icon: closeIcon, onClick: proc() = this.unmount())
 
             # Note list
-            Div(position: "absolute", top: 50, left: 0, width: 320, height: "calc(100% - 50px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", overflowX: "hidden", overflowY: "scroll"):
+            Div(position: "absolute", top: 40, left: 0, width: 320, height: "calc(100% - 40px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", overflowX: "hidden", overflowY: "scroll"):
                 
                 # Show empty info if no items found
                 Div(text: "No notes", padding: 80, color: "black", opacity: 0.2, textAlign: "center")

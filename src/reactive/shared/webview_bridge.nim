@@ -156,7 +156,7 @@ class WebViewBridge of Component:
 
         # Inject it
         # echo "======="
-        # echo js
+        # echo html.css
         this.injectJS(js)
 
 

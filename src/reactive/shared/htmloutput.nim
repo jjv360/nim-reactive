@@ -63,6 +63,11 @@ let supportedCSS = @[
     CSSProperty(propName: "borderRight", cssName: "border-right"),
     CSSProperty(propName: "boxShadow", cssName: "box-shadow"),
     CSSProperty(propName: "opacity"),
+    CSSProperty(propName: "background"),
+    CSSProperty(propName: "backgroundSize", cssName: "background-size"),
+    CSSProperty(propName: "backgroundPosition", cssName: "background-position"),
+    CSSProperty(propName: "backgroundRepeat", cssName: "background-repeat"),
+    CSSProperty(propName: "backgroundImage", cssName: "background-image"),
 
     # Text fields
     CSSProperty(propName: "color"),
@@ -129,7 +134,9 @@ class ReactiveHTMLOutput:
                 continue
 
             # Get sanitized value string
-            let valStr = val.string.replace(";", "")
+            # NOTE: We can't remove ; because that breaks data URIs...
+            # let valStr = val.string.replace(";", "")
+            let valStr = val.string
 
             # Get CSS property name
             var cssName = field.cssName
