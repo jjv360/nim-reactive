@@ -7,8 +7,14 @@ import ./basecomponent
 ##
 ## Supported CSS property info
 type CSSProperty = object
+
+    ## The name used in the props
     propName: string
+
+    ## The CSS property name
     cssName: string
+
+    ## If true and the user provides a number, we'll add "px" to it
     isPx: bool
 
 
@@ -38,6 +44,10 @@ let supportedCSS = @[
     CSSProperty(propName: "marginTop", cssName: "margin-top", isPx: true),
     CSSProperty(propName: "marginBottom", cssName: "margin-bottom", isPx: true),
     CSSProperty(propName: "marginRight", cssName: "margin-right", isPx: true),
+    CSSProperty(propName: "overflow"),
+    CSSProperty(propName: "overflowX", cssName: "overflow-x"),
+    CSSProperty(propName: "overflowY", cssName: "overflow-y"),
+    CSSProperty(propName: "webkitOverflowScrolling", cssName: "-webkit-overflow-scrolling"),
 
     # Flexbox fields
     CSSProperty(propName: "flex"),
@@ -52,7 +62,17 @@ let supportedCSS = @[
     CSSProperty(propName: "borderLeft", cssName: "border-left"),
     CSSProperty(propName: "borderRight", cssName: "border-right"),
     CSSProperty(propName: "boxShadow", cssName: "box-shadow"),
+
+    # Text fields
+    CSSProperty(propName: "color"),
+    CSSProperty(propName: "font"),
+    CSSProperty(propName: "fontFamily", cssName: "font-family"),
+    CSSProperty(propName: "fontWeight", cssName: "font-weight"),
+    CSSProperty(propName: "fontStyle", cssName: "font-style"),
+    CSSProperty(propName: "fontSize", cssName: "font-size", isPx: true),
     CSSProperty(propName: "textShadow", cssName: "text-shadow"),
+    CSSProperty(propName: "lineHeight", cssName: "line-height"),
+
 
 ]
 
@@ -114,7 +134,7 @@ class ReactiveHTMLOutput:
             if cssName.len == 0:
                 cssName = field.propName
 
-            # Check if it needs the px extensino
+            # Check if it needs the px extension
             if field.isPx and val.isNumber:
                 css = css & cssName & ": " & valStr & "px; "
             else:

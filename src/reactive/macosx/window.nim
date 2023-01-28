@@ -1,11 +1,14 @@
 import std/tables
 import std/strutils
+import std/json
 import classes
 import ../shared/basecomponent
 import ../shared/mounts
 import ../shared/webview_bridge
 import ../shared/htmloutput
+import ../shared/htmlcomponents
 import ./native/corefoundation
+import ./native/foundation
 import ./native/appkit
 import ./native/webkit
 
@@ -28,8 +31,16 @@ class Window of WebViewBridge:
         this.nativeWindow = NSWindow.alloc().initWithContentRect(rect)
         this.nativeWindow.title = this.props{"title"}.string
 
-        # Create web view
+        # Create web view configuration
         let configuration = WKWebViewConfiguration.alloc().init()
+        configuration.userContentController = WKUserContentController.alloc().init()
+
+        # Register JavaScript callback
+        configuration.userContentController.addScriptMessageHandler(WKScriptMessageHandler.create(proc(text: NSString) =
+            this.onJsCallback(text)
+        ), "nimreactiveCallback")
+
+        # Create web view and attach to the window
         this.webview = WKWebView.alloc().initWithFrame(rect, configuration)
         this.nativeWindow.contentView = NSView(this.webview)
 
@@ -58,3 +69,17 @@ class Window of WebViewBridge:
 
         # Do it
         this.webview.evaluateJavaScript(js)
+
+
+    ## Called when the JS side sends us an event
+    method onJsCallback(str: string) =
+
+        # Parse it
+        let msg = parseJson(str)
+
+        # Find the target component
+        let targetID = msg{"elementID"}.getStr()
+        let component = HTMLComponent(this.renderedElements[targetID].component)
+        
+        # Notify it
+        component.onJsEvent(msg{"name"}.getStr(), msg{"data"}.getStr())

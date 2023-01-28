@@ -91,6 +91,10 @@ class HTMLComponent of Component:
             return this.getRenderedParentID(fromComp.renderedParent)
 
 
+    ## Called when an event is received from the JS side
+    method onJsEvent(name: string, data: string) = discard
+
+
 
 
 ##
@@ -101,7 +105,22 @@ class Div of HTMLComponent:
     method renderHTML(): ReactiveHTMLOutput =
         let output = super.renderHTML()
         output.tagName = "div"
+
+        # Attach handlers to JavaScript
+        if this.props{"onClick"} != nil:
+            output.jsOnMount &= ";\n element.addEventListener('click', function(e) { window.nimreactiveEmit(element.id, 'event:onClick') }) "
+
         return output
+
+
+    ## Called when an event is received from the JS side
+    method onJsEvent(name: string, data: string) =
+
+        # Check event
+        if name == "event:onClick":
+
+            # Call handler
+            this.props["onClick"].procValue()
 
 
 

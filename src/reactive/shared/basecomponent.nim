@@ -136,8 +136,11 @@ class Component:
     ## Parent node, if any
     var renderedParent: Component = nil
 
+    ## Rendered child key
+    var renderedKey = ""
+
     ## Component state
-    var state: Table[string, ReactivePropertyItem]
+    # var state: Table[string, ReactivePropertyItem]
 
     ## Private state flags
     var privateHasDoneNativeMount = false

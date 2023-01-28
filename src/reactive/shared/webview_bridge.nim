@@ -5,6 +5,54 @@ import std/tables
 import ./basecomponent
 import ./htmloutput
 
+
+## Code to inject on WebView startup ... other libraries can add to this list when they're imported to include their own code
+var reactiveJsInject*: seq[string] = @[
+
+    # Our own code
+    """
+            
+        // Add default styles
+        var elem = document.createElement('style')
+        elem.innerText = `
+            html, body {
+                margin: 0px;
+                padding: 0px;
+                cursor: default;
+                user-select: none;
+                -webkit-user-select: none;
+                overflow: hidden;
+                font-family: Arial, sans-serif;
+            }
+        `
+        document.body.appendChild(elem)
+
+        // Prevent right click menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault()
+        })
+
+        // Attach function to send events back to native code
+        window.nimreactiveEmit = function(elementID, name, data) {
+
+            // Convert data to string
+            if (typeof data == 'object')
+                data = JSON.stringify(data)
+
+            // Send it to WebKit
+            window.webkit.messageHandlers.nimreactiveCallback.postMessage(JSON.stringify({
+                elementID: elementID,
+                name: name,
+                data: data
+            }))
+
+        }
+            
+    """
+
+]
+
+
 ## Escape JavaScriopt string, assuming it's injected with single quotation marks (')
 proc jsSanitize(input: string): string =
     return input.replace("'", "\\'").replace("\n", "\\n")
@@ -23,36 +71,22 @@ class WebViewBridge of Component:
     ## Called to inject JS into the page
     method injectJS(js: string) = raiseAssert("WebViewBridge.injectJS() must be implemented by subclasses.")
 
+    ## Called to do the first JS injection
+    method doFirstInjection() =
+
+        # Stop if already done
+        if this.hasDoneFirstInject: return
+        this.hasDoneFirstInject = true
+
+        # Inject
+        this.injectJS(reactiveJsInject.join(";\n"))
+
+
     ## Called when a child HTMLComponent is added/updated
     method onHTMLChildUpdate(child: Component, html: ReactiveHTMLOutput, parentTagID: string = "") =
 
         # Do first injection
-        if not this.hasDoneFirstInject:
-            this.hasDoneFirstInject = true
-
-            # Inject
-            this.injectJS("""
-            
-                // Add default styles
-                var elem = document.createElement('style')
-                elem.innerText = `
-                    html, body {
-                        margin: 0px;
-                        padding: 0px;
-                        cursor: default;
-                        user-select: none;
-                        -webkit-user-select: none;
-                        overflow: hidden;
-                    }
-                `
-                document.body.appendChild(elem)
-
-                // Prevent right click menu
-                document.addEventListener('contextmenu', function(e) {
-                    e.preventDefault()
-                })
-            
-            """)
+        this.doFirstInjection()
 
         # Store it
         this.renderedElements[html.privateTagID] = html
@@ -61,59 +95,62 @@ class WebViewBridge of Component:
         let js = """
 
             // Find it
-            var elem = document.getElementById('""" & html.privateTagID.jsSanitize() & """')
-            var elemDidExist = elem
-            if (!elem) {
+            var element = document.getElementById('""" & html.privateTagID.jsSanitize() & """')
+            var elemDidExist = element
+            if (!element) {
 
                 // Not found, create it
-                elem = document.createElement('""" & html.tagName.jsSanitize() & """')
-                elem.id = '""" & html.privateTagID.jsSanitize() & """'
-                document.body.appendChild(elem)
+                element = document.createElement('""" & html.tagName.jsSanitize() & """')
+                element.id = '""" & html.privateTagID.jsSanitize() & """'
+                document.body.appendChild(element)
 
             }
 
             // Update details
-            elem.className = '""" & html.tagClass.jsSanitize() & """'
-            elem.style.cssText = '""" & html.css.jsSanitize() & """'
+            element.className = '""" & html.tagClass.jsSanitize() & """'
+            element.style.cssText = '""" & html.css.jsSanitize() & """'
 
             // Update inner text
             if (""" & $html.isTextElement & """)
-                elem.innerText = '""" & html.innerText.jsSanitize() & """'
+                element.innerText = '""" & html.innerText.jsSanitize() & """'
 
             // Update parent
             var requestedParentID = '""" & parentTagID.jsSanitize() & """'
-            var currentParentID = elem.parentNode && elem.parentNode.id || ""
+            var currentParentID = element.parentNode && element.parentNode.id || ""
             if (currentParentID != requestedParentID) {
 
                 // Remove from current parent
-                if (elem.parentNode)
-                    elem.parentNode.removeChild(elem)
+                if (element.parentNode)
+                    element.parentNode.removeChild(element)
 
                 // Add to parent
                 var newParent = document.getElementById(requestedParentID)
                 if (newParent)
-                    newParent.appendChild(elem)
+                    newParent.appendChild(element)
 
             }
 
             // Execute JavaScript code on mount
-            if (!elemDidExist && """ & $html.jsOnMount.len & """) {
-
-                // Create function
-                function eventRunner(element) {
-                    """ & html.jsOnMount & """
-                }
+            if (!elemDidExist) {
 
                 // Run it
-                eventRunner(elem)
+                """ & html.jsOnMount & """
+
+            }
+
+            // Execute JavaScript code on update
+            if (elemDidExist) {
+
+                // Run it
+                """ & html.jsOnUpdate & """
 
             }
 
         """
 
         # Inject it
-        echo "======="
-        echo js
+        # echo "======="
+        # echo js
         this.injectJS(js)
 
 

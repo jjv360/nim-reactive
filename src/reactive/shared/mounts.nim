@@ -1,3 +1,4 @@
+import std/sequtils
 import classes
 import ./basecomponent
 
@@ -82,18 +83,75 @@ singleton ReactiveMountManager:
 
         # Call render and get components
         let renderOutput = component.render()
-        if renderOutput == nil: 
+        var requestedChildren: seq[Component]
+        if renderOutput == nil:
+            requestedChildren = component.children
+        else:
+            requestedChildren = @[renderOutput]
 
-            # Add children
-            component.renderedChildren = component.children
-            for child in component.renderedChildren:
+        # Synchronize children list ... first add/update all children
+        for idx, child in requestedChildren:
+
+            # Get child key
+            var key: string = child.props{"key"}
+            if key.len == 0:
+                key = child.className() & "-" & $idx
+
+            # Find existing child
+            var existingChild: Component = nil
+            for it in component.renderedChildren:
+                if it.renderedKey == key:
+                    existingChild = it
+                    break
+
+            # Check if child already exists
+            if existingChild == nil:
+
+                # Not found, add it
+                child.renderedKey = key
+                component.renderedChildren.add(child)
                 child.renderedParent = component
 
-        else:
+            else:
 
-            # Add item
-            component.renderedChildren = @[renderOutput]
-            renderOutput.renderedParent = component
+                # Child exists! Update the props on the child
+                existingChild.props = child.props
+
+
+        # Remove all rendered children that are no longer being rendered
+        var nextIdx = 0
+        while nextIdx < component.renderedChildren.len:
+
+            # Get child key
+            let idx = nextIdx
+            nextIdx += 1
+            let child = component.renderedChildren[idx]
+            var key: string = child.props{"key"}
+            if key.len == 0:
+                key = child.className() & "-" & $idx
+
+            # Find requested child
+            var requestedChild: Component = nil
+            for it in requestedChildren:
+
+                # Get child key
+                var childKey: string = it.props{"key"}
+                if childKey.len == 0:
+                    childKey = it.className() & "-" & $idx
+
+                # Check if matches
+                if childKey == key:
+                    requestedChild = it
+                    break
+
+            # Stop if found
+            if requestedChild != nil:
+                continue
+
+            # Not found, remove this child
+            this.unmountSingle(child)
+            component.renderedChildren.delete(idx)
+            nextIdx -= 1
 
 
         # Render children as well
@@ -104,3 +162,16 @@ singleton ReactiveMountManager:
         if not component.privateHasDoneMount:
             component.privateHasDoneMount = true
             component.onMount()
+
+
+## Render the component again. Call this whenevr your component's state changes.
+proc renderAgain*(this: Component) =
+
+    # Ensure this component is mounted
+    let mountedComponent = ReactiveMountManager.shared.findMountedComponent(this)
+    if mountedComponent == nil:
+        echo "[NimReactive] renderAgain() ignored since this component is not mounted"
+        return
+
+    # Render it
+    ReactiveMountManager.shared.renderComponent(this)
