@@ -58,6 +58,15 @@ class Window of WebViewBridge:
         # Load web content
         # this.webview.loadHTMLString(this.getHTMLBoilerplate())
 
+        # Add listener for when the window is closed
+        discard NSNotificationCenter.defaultCenter.addObserverForName(NSWindowWillCloseNotification, callback = proc(notification: NSNotification) =
+            
+            # Check if it's our window that was closed
+            if notification.object.pointer == this.nativeWindow.pointer:
+                this.onWindowClosed()
+            
+        )
+
 
     ## Called on unmount
     method onNativeUnmount() = 
@@ -83,3 +92,10 @@ class Window of WebViewBridge:
         
         # Notify it
         component.onJsEvent(msg{"name"}.getStr(), msg{"data"}.getStr())
+
+
+    ## Called by the system when the user closes the window
+    method onWindowClosed() =
+
+        # Unmount it
+        ReactiveMountManager.shared.unmount(this)

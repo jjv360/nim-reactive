@@ -156,7 +156,33 @@ class WebViewBridge of Component:
 
     ## Called when a child HTMLComponent is removed
     method onHTMLChildRemove(child: Component, html: ReactiveHTMLOutput) =
-        raiseAssert("NOT IMPLEMETED YET")
+        
+        # Remove it
+        this.renderedElements.del(html.privateTagID)
+        
+        # Generate JS changes
+        let js = """
+
+            // Find it
+            var element = document.getElementById('""" & html.privateTagID.jsSanitize() & """')
+            if (element) {
+
+                // Call js removal code
+                """ & html.jsOnRemove & """
+
+                // Remove from current parent
+                if (element.parentNode)
+                    element.parentNode.removeChild(element)
+
+            }
+
+        """
+
+        # Inject it
+        # echo "======="
+        # echo js
+        this.injectJS(js)
+
 
 
 ## Get the nearest bridge component for a component

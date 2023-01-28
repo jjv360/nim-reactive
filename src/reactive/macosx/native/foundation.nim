@@ -8,7 +8,12 @@
 
 #### NSObject
 
+## The root class of most Objective-C class hierarchies, from which subclasses inherit a basic interface to the runtime system and the ability to behave as Objective-C objects.
 type NSObject* = distinct pointer
+
+## Compare objects
+proc `==`*(a: NSObject, b: NSObject): bool = a.pointer == b.pointer
+
 
 
 
@@ -95,3 +100,68 @@ proc NSURL_fileURLWithPath(path: NSString, isDirectory: bool): NSURL {.header:"<
 proc fileURLWithPath*(_: typedesc[NSURL], path: NSString, isDirectory: bool): NSURL = NSURL_fileURLWithPath(path, isDirectory)
 
 
+
+
+
+#### NSNotification
+
+## A container for information broadcast through a notification center to all registered observers.
+type NSNotification* = distinct NSObject
+
+## The name of the notification.
+proc name*(this: NSNotification): NSString {.importobjc, header:"<Foundation/Foundation.h>".}
+
+## The object associated with the notification.
+proc `object`*(this: NSNotification): NSObject {.importobjc, header:"<Foundation/Foundation.h>".}
+
+
+
+
+
+#### NSNotificationCenter
+
+{.emit:"""
+
+    // Wrapper for NSNotificationCenter into Nim
+    #import <Foundation/Foundation.h>
+
+    // Add a handler
+    NSObject* NimAddNSNotificationHandler(NSNotificationCenter* center, NSString* name, id object, void* nimProc, void* nimEnv) {
+
+        // Add it
+        return [center addObserverForName:name object:object queue:nil usingBlock:^(NSNotification* notification) {
+
+            // Send to Nim
+            void (*func)(NSNotification*, void*) = nimProc;
+            func(notification, nimEnv);
+
+        }];
+
+    }
+
+""".}
+
+## A notification dispatch mechanism that enables the broadcast of information to registered observers.
+type NSNotificationCenter* = distinct NSObject
+
+## A structure that defines the name of a notification.
+type NSNotificationName* = NSString
+
+## The app’s default notification center.
+proc NSNotificationCenter_defaultCenter(): NSNotificationCenter {.importobjc:"NSNotificationCenter defaultCenter", header:"<Foundation/Foundation.h>".}
+proc defaultCenter*(_: typedesc[NSNotificationCenter]): NSNotificationCenter = NSNotificationCenter_defaultCenter()
+
+## Creates a notification with a given name and sender and posts it to the notification center.
+proc postNotificationName*(this: NSNotificationCenter, name: NSNotificationName, `object`: NSObject = NSObject(nil)) {.importobjc, header:"<Foundation/Foundation.h>".}
+
+## Adds an entry to the notification center to receive notifications that passed to the provided block.
+proc NimAddNSNotificationHandler(center: NSNotificationCenter, name: NSString, `object`: NSObject, nimProc: pointer, nimEnv: pointer): NSObject {.importc, nodecl.}
+proc addObserverForName*(this: NSNotificationCenter, name: NSString, `object`: NSObject = NSObject(nil), callback: proc(notification: NSNotification) {.closure.}): NSObject =
+
+    # Proc is leaving Nim's memory management, so ensure Nim doesn't discard it
+    # TODO: How do we unref this?
+    var storedProcs {.global.} : seq[proc(notification: NSNotification) {.closure.}]
+    storedProcs.add(callback)
+
+    # Create wrapper class
+    return NimAddNSNotificationHandler(this, name, `object`, callback.rawProc, callback.rawEnv)

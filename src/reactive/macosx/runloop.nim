@@ -3,6 +3,7 @@ import std/asyncdispatch
 import ./dialogs
 import ./native/foundation
 import ./native/appkit
+import ../shared/mounts
 
 
 
@@ -11,9 +12,6 @@ proc reactiveStart*(code: proc()) =
 
     # Catch errors
     try:
-
-        # TODO: Start the autorelease pool?
-        # NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
 
         # Run their code
         code()
@@ -35,6 +33,10 @@ proc reactiveStart*(code: proc()) =
             # Drain the asyncdispatch event queue
             if asyncdispatch.hasPendingOperations():
                 asyncdispatch.drain(1)
+
+            # Quit the app if there's no pending operations on asyncdispatch and there's no rendered windows
+            if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:
+                break
         
     except CatchableError as err:
 
