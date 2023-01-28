@@ -58,8 +58,14 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
                 # let PropertyItem = ident"PropertyItem"
                 code.add(quote do:
                     let propValue = `propValue`
+                    if `propName` == "text": echo "== " & propValue.repr & "\n\n"
                     `nodeVarName`.props[`propName`] = propValue
                 )
+                # if propName == "text":
+                #     echo "==== " & propName
+                #     echo code.repr
+                #     echo ""
+                #     echo ""
 
             else:
 
@@ -119,6 +125,11 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
                     let propValue = `propValue`
                     `nodeVarName`.props[`propName`] = propValue
                 )
+                # if propName == "text":
+                #     echo "====2 " & propName
+                #     echo code.repr
+                #     echo ""
+                #     echo ""
 
             elif child.kind == nnkStmtList and idx == cmd.len-1:
 

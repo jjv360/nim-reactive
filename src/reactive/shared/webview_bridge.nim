@@ -134,7 +134,10 @@ class WebViewBridge of Component:
             if (!elemDidExist) {
 
                 // Run it
-                """ & html.jsOnMount & """
+                function customOnMount(element) {
+                    """ & html.jsOnMount & """
+                }
+                customOnMount(element)
 
             }
 
@@ -142,7 +145,10 @@ class WebViewBridge of Component:
             if (elemDidExist) {
 
                 // Run it
-                """ & html.jsOnUpdate & """
+                function customOnUpdate(element) {
+                    """ & html.jsOnUpdate & """
+                }
+                customOnUpdate(element)
 
             }
 
@@ -167,12 +173,15 @@ class WebViewBridge of Component:
             var element = document.getElementById('""" & html.privateTagID.jsSanitize() & """')
             if (element) {
 
-                // Call js removal code
-                """ & html.jsOnRemove & """
-
                 // Remove from current parent
                 if (element.parentNode)
                     element.parentNode.removeChild(element)
+
+                // Call js removal code
+                function customOnRemove(element) {
+                    """ & html.jsOnRemove & """
+                }
+                customOnRemove(element)
 
             }
 

@@ -4,6 +4,7 @@
 import ../src/reactive # import reactive
 import std/os
 import std/json
+import std/asyncdispatch
 import classes
 
 
@@ -13,9 +14,32 @@ class MenuItem of Component:
         Div(width: "100%", height: 88, borderBottom: "1px solid rgba(0, 0, 0, 0.1)", display: "flex", alignItems: "center", overflow: "hidden"):
             Div(width: 32, height: 32, margin: 20, border: "1px solid red", flex: "0 0 auto")
             Div(marginRight: 20, flex: "1 1 1px"):
-                Div(text: this.props{"title"}.string, fontSize: 15, fontWeight: "bold", color: "black")
-                Div(text: this.props{"text"}.string, fontSize: 13, color: "#333", marginTop: 5)
+                Div(text: this.props{"title"}, fontSize: 15, fontWeight: "bold", color: "black")
+                Div(text: this.props{"text"}, fontSize: 13, color: "#333", marginTop: 5)
 
+
+## Menubar Button
+class BarIcon of Component:
+
+    ## Hovering state
+    var isHovering = false
+
+    ## RenderReactivePropertyItem(stringValue: this.props{"text"}, isString: true)
+    method render(): Component = components:
+        Div(
+            text: this.props{"text"}, 
+            onClick: this.props{"onClick"},
+            onMouseOver: proc() =
+                this.isHovering = true
+                this.renderAgain()
+            ,
+            onMouseOut: proc() =
+                this.isHovering = false
+                this.renderAgain()
+            ,
+            padding: 10, 
+            backgroundColor: if this.isHovering: "rgba(0, 0, 0, 0.1)" else: "transparent"
+        )
 
 
 ## Main app window
@@ -26,6 +50,8 @@ class App of Component:
         "Note 1\nHello!",
         "Note 2\nHi!"
     ]
+
+    var counter = 0
 
     ## Called when the window is created
     method onMount() =
@@ -43,11 +69,20 @@ class App of Component:
         # Update UI
         this.renderAgain()
 
+        # Start counter
+        # proc t() {.async.} =
+        #     while true:
+        #         await sleepAsync(100)
+        #         this.counter += 1
+        #         this.renderAgain()
+        # asyncCheck t()
+
 
     ## Called when the window is closed
     method onUnmount() =
 
         echo "App exited"
+
 
     method render(): Component = components:
 
@@ -59,29 +94,16 @@ class App of Component:
 
             # Header
             Div(backgroundColor: "rgba(0, 0, 0, 0.1)", position: "absolute", top: 0, left: 0, width: "100%", height: 50, display: "flex", alignItems: "center", borderBottom: "1px solid rgba(0, 0, 0, 0.1)"):
-                Div(text: "Load")
-                Div(text: "Save")
+                BarIcon(text: "Load")
+                BarIcon(text: "Save")
                 Div(flex: "1 1 auto")
-                Div(text: "Close", onClick: proc() = echo "CLicked close!")
+                BarIcon(text: "Close", onClick: proc() = this.unmount())
 
             # Note list
             Div(position: "absolute", top: 50, left: 0, width: 320, height: "calc(100% - 50px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", overflowX: "hidden", overflowY: "scroll"):
-                MenuItem(title: "Note 1", text: "Hello!")
-                MenuItem(title: "Note 2", text: "Hello!")
-                MenuItem(title: "Note 3", text: "Hello!")
-                MenuItem(title: "Note 4", text: "asdsdsadsad skjs kj sj asdsdsadsad skjs kj sj asdsdsadsad skjs kj sj asdsdsadsad skjs kj sj asdsdsadsad skjs kj sj asdsdsadsad skjs kj sj asdsdsadsad skjs kj sj asdsdsadsad skjs kj sj ")
-                MenuItem(title: "Note 1", text: "Hello!")
-                MenuItem(title: "Note 2", text: "Hello!")
-                MenuItem(title: "Note 3", text: "Hello!")
-                MenuItem(title: "Note 1", text: "Hello!")
-                MenuItem(title: "Note 2", text: "Hello!")
-                MenuItem(title: "Note 3", text: "Hello!")
-                MenuItem(title: "Note 1", text: "Hello!")
-                MenuItem(title: "Note 2", text: "Hello!")
-                MenuItem(title: "Note 3", text: "Hello!")
-                MenuItem(title: "Note 1", text: "Hello!")
-                MenuItem(title: "Note 2", text: "Hello!")
-                MenuItem(title: "Note 3", text: "Hello!")
+                
+                # Show empty info if no items found
+                Div(text: "No notes " & $this.counter, padding: 80, color: "black", opacity: 0.2, textAlign: "center")
 
 
 # Start the app
@@ -89,4 +111,4 @@ reactiveStart:
     
     # Create main window
     reactiveMount:
-        App()
+        App

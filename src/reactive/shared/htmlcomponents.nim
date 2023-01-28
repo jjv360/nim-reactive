@@ -51,6 +51,29 @@ class HTMLComponent of Component:
         bridge.onHTMLChildUpdate(this, this.htmlOutput, this.getRenderedParentID())
 
 
+    ## Called on component update
+    method onNativeUpdate() =
+
+        # Ask the subclass to update it's HTML
+        let output = this.renderHTML()
+        if output == nil:
+            return
+
+        # Store it and ensure important fields haven't changed
+        let originalHtml = this.htmlOutput
+        this.htmlOutput = output
+        this.htmlOutput.privateTagID = originalHtml.privateTagID
+        this.htmlOutput.component = this
+
+        # Get WebViewBridge parent
+        let bridge = this.nearestWebBridge()
+        if bridge == nil:
+            raiseAssert(this.className() & " is an HTML component, it must be rendered inside an HTML-based component (such as a Window).")
+
+        # Notify bridge
+        bridge.onHTMLChildUpdate(this, this.htmlOutput, this.getRenderedParentID())
+
+
     ## Called on component unmount
     method onNativeUnmount() =
 
@@ -107,8 +130,17 @@ class Div of HTMLComponent:
         output.tagName = "div"
 
         # Attach handlers to JavaScript
-        if this.props{"onClick"} != nil:
-            output.jsOnMount &= ";\n element.addEventListener('click', function(e) { window.nimreactiveEmit(element.id, 'event:onClick') }) "
+        if this.props.hasKey("onClick"):
+            output.jsOnMount &= ";\n element.onclick = function(e) { window.nimreactiveEmit(element.id, 'event:onClick') } "
+            output.jsOnUpdate &= ";\n element.onclick = function(e) { window.nimreactiveEmit(element.id, 'event:onClick') } "
+
+        if this.props.hasKey("onMouseOver"):
+            output.jsOnMount &= ";\n element.onmouseover = function(e) { window.nimreactiveEmit(element.id, 'event:onMouseOver') } "
+            output.jsOnUpdate &= ";\n element.onmouseover = function(e) { window.nimreactiveEmit(element.id, 'event:onMouseOver') } "
+
+        if this.props.hasKey("onMouseOut"):
+            output.jsOnMount &= ";\n element.onmouseout = function(e) { window.nimreactiveEmit(element.id, 'event:onMouseOut') } "
+            output.jsOnUpdate &= ";\n element.onmouseout = function(e) { window.nimreactiveEmit(element.id, 'event:onMouseOut') } "
 
         return output
 
@@ -120,7 +152,23 @@ class Div of HTMLComponent:
         if name == "event:onClick":
 
             # Call handler
-            this.props["onClick"].procValue()
+            let handlerProp = this.props{"onClick"}
+            if handlerProp != nil and handlerProp.procValue != nil:
+                handlerProp.procValue()
+        
+        elif name == "event:onMouseOver":
+
+            # Call handler
+            let handlerProp = this.props{"onMouseOver"}
+            if handlerProp != nil and handlerProp.procValue != nil:
+                handlerProp.procValue()
+        
+        elif name == "event:onMouseOut":
+
+            # Call handler
+            let handlerProp = this.props{"onMouseOut"}
+            if handlerProp != nil and handlerProp.procValue != nil:
+                handlerProp.procValue()
 
 
 

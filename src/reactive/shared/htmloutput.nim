@@ -62,6 +62,7 @@ let supportedCSS = @[
     CSSProperty(propName: "borderLeft", cssName: "border-left"),
     CSSProperty(propName: "borderRight", cssName: "border-right"),
     CSSProperty(propName: "boxShadow", cssName: "box-shadow"),
+    CSSProperty(propName: "opacity"),
 
     # Text fields
     CSSProperty(propName: "color"),
@@ -72,6 +73,7 @@ let supportedCSS = @[
     CSSProperty(propName: "fontSize", cssName: "font-size", isPx: true),
     CSSProperty(propName: "textShadow", cssName: "text-shadow"),
     CSSProperty(propName: "lineHeight", cssName: "line-height"),
+    CSSProperty(propName: "textAlign", cssName: "text-align"),
 
 
 ]

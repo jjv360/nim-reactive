@@ -77,7 +77,14 @@ proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value:
     let item = ReactivePropertyItem.init()
     item.procValue = value
     item.stringValue = "<proc>"
+    item.isProc = true
     props[name] = item
+
+## HACK: Save a ReactivePropertyItem to the property list ... somehow the above function is being called in this case without this...
+proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: ReactivePropertyItem) =
+    {.warning[deprecated]:off.}:
+        props.del(name)
+        props.add(name, value) 
 
 ## Convert a ReactivePropertyItem to a string
 converter propToString*(item: ReactivePropertyItem) : string = 
@@ -184,6 +191,12 @@ class Component:
     ## Called when the component has been mounted
     method onMount() = discard
 
+    ## Called when the component has been updated
+    method onNativeUpdate() = discard
+
+    ## Called when the component has been updated
+    method onUpdate() = discard
+
     ## Called when the component has been unmounted
     method onUnmount() = discard
 
@@ -229,9 +242,3 @@ class Component:
 ##
 ## Group component which simply renders it's children
 class Group of Component
-
-
-##
-## Utility: Unmount this component
-template unmount*(component: Component) =
-    ReactiveMountManager.unmount(component)

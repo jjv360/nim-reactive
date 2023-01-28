@@ -170,5 +170,8 @@ proc title*(this: NSWindow): NSString {.importobjc, header:"<AppKit/AppKit.h>".}
 ## The string that appears in the title bar of the window or the path to the represented file.
 proc `title=`*(this: NSWindow, title: NSString) {.importobjc:"setTitle", header:"<AppKit/AppKit.h>".}
 
+## Removes the window from the screen.
+proc close*(this: NSWindow) {.importobjc, header:"<AppKit/AppKit.h>".}
+
 ## A notification that the window object is about to close.
 let NSWindowWillCloseNotification* {.importc, header:"<AppKit/AppKit.h>".} : NSString

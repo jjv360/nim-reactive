@@ -45,7 +45,7 @@ singleton ReactiveMountManager:
         # Find parent which is mounted, stop if not found since that means this component tree is already unmounted
         let rootComponent = this.findMountedComponent(component)
         if rootComponent == nil:
-            echo "[NimReactive] Unmount skipped since this component tree is not mounted."
+            # echo "[NimReactive] Unmount skipped since this component tree is not mounted."
             return
 
         # Remove it
@@ -116,6 +116,7 @@ singleton ReactiveMountManager:
 
                 # Child exists! Update the props on the child
                 existingChild.props = child.props
+                existingChild.children = child.children
 
 
         # Remove all rendered children that are no longer being rendered
@@ -162,6 +163,9 @@ singleton ReactiveMountManager:
         if not component.privateHasDoneMount:
             component.privateHasDoneMount = true
             component.onMount()
+        else:
+            component.onNativeUpdate()
+            component.onUpdate()
 
 
 ## Render the component again. Call this whenevr your component's state changes.
@@ -175,3 +179,10 @@ proc renderAgain*(this: Component) =
 
     # Render it
     ReactiveMountManager.shared.renderComponent(this)
+
+
+
+##
+## Utility: Unmount this component
+proc unmount*(component: Component) =
+    ReactiveMountManager.shared.unmount(component)

@@ -70,7 +70,10 @@ class Window of WebViewBridge:
 
     ## Called on unmount
     method onNativeUnmount() = 
-        echo "unmount"
+        
+        # Close and remove the window
+        if this.nativeWindow.pointer != nil:
+            this.nativeWindow.close()
 
 
     ## Called to inject JS into the page
