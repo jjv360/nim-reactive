@@ -181,6 +181,13 @@ proc renderAgain*(this: Component) =
     ReactiveMountManager.shared.renderComponent(this)
 
 
+## Check if component is mounted
+proc isMounted*(this: Component): bool =
+
+    # it's mounted if we can find a mounted component in it's ancestors
+    let mountedComponent = ReactiveMountManager.shared.findMountedComponent(this)
+    return mountedComponent != nil
+
 
 ##
 ## Utility: Unmount this component

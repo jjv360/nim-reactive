@@ -37,7 +37,9 @@ class BarIcon of Component:
                 this.isHovering = false
                 this.renderAgain()
             ,
-            padding: 10, 
+            padding: "17px 12px", 
+            height: "100%",
+            boxSizing: "border-box",
             backgroundColor: if this.isHovering: "rgba(0, 0, 0, 0.1)" else: "transparent"
         )
 
@@ -50,8 +52,6 @@ class App of Component:
         "Note 1\nHello!",
         "Note 2\nHi!"
     ]
-
-    var counter = 0
 
     ## Called when the window is created
     method onMount() =
@@ -68,14 +68,6 @@ class App of Component:
 
         # Update UI
         this.renderAgain()
-
-        # Start counter
-        # proc t() {.async.} =
-        #     while true:
-        #         await sleepAsync(100)
-        #         this.counter += 1
-        #         this.renderAgain()
-        # asyncCheck t()
 
 
     ## Called when the window is closed
@@ -103,7 +95,7 @@ class App of Component:
             Div(position: "absolute", top: 50, left: 0, width: 320, height: "calc(100% - 50px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", overflowX: "hidden", overflowY: "scroll"):
                 
                 # Show empty info if no items found
-                Div(text: "No notes " & $this.counter, padding: 80, color: "black", opacity: 0.2, textAlign: "center")
+                Div(text: "No notes", padding: 80, color: "black", opacity: 0.2, textAlign: "center")
 
 
 # Start the app

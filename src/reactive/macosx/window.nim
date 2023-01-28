@@ -91,7 +91,9 @@ class Window of WebViewBridge:
 
         # Find the target component
         let targetID = msg{"elementID"}.getStr()
-        let component = HTMLComponent(this.renderedElements[targetID].component)
+        let element = this.renderedElements.getOrDefault(targetID, nil)
+        if element == nil: return
+        let component = HTMLComponent(element.component)
         
         # Notify it
         component.onJsEvent(msg{"name"}.getStr(), msg{"data"}.getStr())
