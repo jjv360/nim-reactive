@@ -12,17 +12,18 @@ crate:
     target "macosx"
 
 
-import ../src/reactive# import reactive
+import ../src/reactive # import reactive
 import std/asyncdispatch
 import classes
 
 # Main app window
-class MainWindow of Window:
+class MainWindow of BaseComponent:
 
     ## Called when the window is created
     method onMount() =
 
         echo "Main Window created!"
+        this.printViewHeirarchy()
 
 
     ## Called when the window is closed
@@ -31,7 +32,12 @@ class MainWindow of Window:
         echo "Main window closed"
 
     method render(): BaseComponent = components:
-        BaseComponent
+
+        # Background
+        Div(backgroundColor: "#222", position: "absolute", top: 0, left: 0, width: "100%", height: "100%")
+
+        # Header
+        Div(backgroundColor: "#333", position: "absolute", top: 0, left: 0, width: "100%", height: 50, )
 
 
 # Start the app
@@ -51,8 +57,8 @@ reactiveStart:
         # BaseComponent:
         #     BaseComponent(second: "another", item: 1, doubleer: 2, cb: proc() = echo "Hi")
 
-    proc t() {.async.} =
-        while true:
-            await sleepAsync(1000)
-            echo "HERE"
-    discard t()
+    # proc t() {.async.} =
+    #     while true:
+    #         await sleepAsync(1000)
+    #         echo "HERE"
+    # discard t()

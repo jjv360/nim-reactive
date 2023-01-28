@@ -1,26 +1,24 @@
 import std/tables
+import std/strutils
 import classes
-import ./dialogs
 import ../shared/basecomponent
 import ../shared/mounts
+import ../shared/webview_bridge
+import ../shared/htmloutput
 import ./native/corefoundation
 import ./native/appkit
 import ./native/webkit
-import ../shared/webview_bridge
 
 
 ##
 ## This class represents an onscreen window.
-class Window of BaseComponent:
+class Window of WebViewBridge:
 
     ## Native window
     var nativeWindow: NSWindow
 
     ## Web view
     var webview: WKWebView
-
-    ## Web view bridge
-    var bridge: WebViewBridge = WebViewBridge.init()
 
     ## Called when this component is mounted
     method onNativeMount() =
@@ -35,9 +33,6 @@ class Window of BaseComponent:
         this.webview = WKWebView.alloc().initWithFrame(rect, configuration)
         this.nativeWindow.contentView = NSView(this.webview)
 
-        # Load web content
-        this.webview.loadHTMLString(this.bridge.getHTMLBoilerplate())
-
         # Show window
         this.nativeWindow.makeKeyAndOrderFront()
         this.nativeWindow.makeMainWindow()
@@ -45,7 +40,21 @@ class Window of BaseComponent:
         # Bring app to front
         NSApplication.sharedApplication.activateIgnoringOtherApps()
 
+        # Start the bridge
+        # this.bridge = WebViewBridge.init()
+        # this.bridge.start()
+
+        # Load web content
+        # this.webview.loadHTMLString(this.getHTMLBoilerplate())
+
 
     ## Called on unmount
     method onNativeUnmount() = 
         echo "unmount"
+
+
+    ## Called to inject JS into the page
+    method injectJS(js: string) =
+
+        # Do it
+        this.webview.evaluateJavaScript(js)

@@ -18,7 +18,7 @@ singleton ReactiveMountManager:
             if this.mountedComponents.contains(node):
                 return node
             else:
-                node = node.parent
+                node = node.renderedParent
 
         # Not found
         return nil
@@ -64,7 +64,7 @@ singleton ReactiveMountManager:
             return
 
         # Call unmount on children
-        for child in component.children:
+        for child in component.renderedChildren:
             this.unmountSingle(child)
 
         # Unmount it
@@ -80,10 +80,24 @@ singleton ReactiveMountManager:
             component.privateHasDoneNativeMount = true
             component.onNativeMount()
 
-        # TODO: Update children from render() results
+        # Call render and get components
+        let renderOutput = component.render()
+        if renderOutput == nil: 
+
+            # Add children
+            component.renderedChildren = component.children
+            for child in component.renderedChildren:
+                child.renderedParent = component
+
+        else:
+
+            # Add item
+            component.renderedChildren = @[renderOutput]
+            renderOutput.renderedParent = component
+
 
         # Render children as well
-        for child in component.children:
+        for child in component.renderedChildren:
             this.renderComponent(child)
 
         # Perform mount

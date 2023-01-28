@@ -5,7 +5,7 @@ import std/strutils
 
 ##
 ## Property item within a property bundle
-class PropertyItem:
+class ReactivePropertyItem:
 
     ## Value storage
     var stringValue = ""
@@ -13,13 +13,21 @@ class PropertyItem:
     var floatValue = 0.0
     var procValue: proc() = nil
 
+    ## Original value type
+    var isString = false
+    var isInt = false
+    var isFloat = false
+    var isNumber = false
+    var isProc = false
+
 
 ## Convert a string to a PropertyItem
-converter propFromString*(value: string) : PropertyItem =
+converter propFromString*(value: string) : ReactivePropertyItem =
 
     # Set string
-    let item = PropertyItem.init()
+    let item = ReactivePropertyItem.init()
     item.stringValue = value
+    item.isString = true
 
     # Set int
     try:
@@ -36,73 +44,78 @@ converter propFromString*(value: string) : PropertyItem =
     # Done
     return item
 
-## Convert an int to a PropertyItem
-converter propFromInt*(value: int) : PropertyItem =
-    let item = PropertyItem.init()
+## Convert an int to a ReactivePropertyItem
+converter propFromInt*(value: int) : ReactivePropertyItem =
+    let item = ReactivePropertyItem.init()
     item.stringValue = $value
     item.intValue = value
     item.floatValue = value.toFloat()
+    item.isInt = true
+    item.isNumber = true
     return item
 
-## Convert a float to a PropertyItem
-converter propFromFloat*(value: float) : PropertyItem =
-    let item = PropertyItem.init()
+## Convert a float to a ReactivePropertyItem
+converter propFromFloat*(value: float) : ReactivePropertyItem =
+    let item = ReactivePropertyItem.init()
     item.stringValue = $value
     item.intValue = value.toInt()
     item.floatValue = value
+    item.isFloat = true
+    item.isNumber = true
     return item
 
-## Convert a proc to a PropertyItem
-converter propFromProc*(value: proc()) : PropertyItem =
-    let item = PropertyItem.init()
+## Convert a proc to a ReactivePropertyItem
+converter propFromProc*(value: proc()) : ReactivePropertyItem =
+    let item = ReactivePropertyItem.init()
     item.procValue = value
     item.stringValue = "<proc>"
+    item.isProc = true
     return item
 
-## Save a proc to a PropertyItem ... this is necessary because the converter from proc doesn't seem to work
-proc `[]=`*(props: var Table[string, PropertyItem], name: string, value: proc()) =
-    let item = PropertyItem.init()
+## Save a proc to a ReactivePropertyItem ... this is necessary because the converter from proc doesn't seem to work
+proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: proc()) =
+    let item = ReactivePropertyItem.init()
     item.procValue = value
     item.stringValue = "<proc>"
     props[name] = item
 
-## Convert a PropertyItem to a string
-converter propToString*(item: PropertyItem) : string = 
+## Convert a ReactivePropertyItem to a string
+converter propToString*(item: ReactivePropertyItem) : string = 
     if item == nil: return ""
     return item.stringValue
 
-## Convert a PropertyItem to a cstring
-converter propToCString*(item: PropertyItem) : cstring = 
+## Convert a ReactivePropertyItem to a cstring
+converter propToCString*(item: ReactivePropertyItem) : cstring = 
     if item == nil: return ""
     return item.stringValue.cstring
 
-## Convert a PropertyItem to an int
-converter propToInt*(item: PropertyItem) : int = 
+## Convert a ReactivePropertyItem to an int
+converter propToInt*(item: ReactivePropertyItem) : int = 
     if item == nil: return 0
     return item.intValue
 
-## Convert a PropertyItem to an int32
-converter propToInt32*(item: PropertyItem) : int32 = 
+## Convert a ReactivePropertyItem to an int32
+converter propToInt32*(item: ReactivePropertyItem) : int32 = 
     if item == nil: return 0
     return item.intValue.int32
 
-## Convert a PropertyItem to an int64
-converter propToInt64*(item: PropertyItem) : int64 = 
+## Convert a ReactivePropertyItem to an int64
+converter propToInt64*(item: ReactivePropertyItem) : int64 = 
     if item == nil: return 0
     return item.intValue.int64
 
-## Convert a PropertyItem to a float
-converter propToFloat*(item: PropertyItem) : float =
+## Convert a ReactivePropertyItem to a float
+converter propToFloat*(item: ReactivePropertyItem) : float =
     if item == nil: return 0
     return item.floatValue
 
-## Convert a PropertyItem to a proc
-converter propToProc*(item: PropertyItem) : proc() = 
+## Convert a ReactivePropertyItem to a proc
+converter propToProc*(item: ReactivePropertyItem) : proc() = 
     if item == nil: return nil
     return item.procValue
 
 ## Utility to get an optional value from the property bag
-proc `{}`*(props: Table[string, PropertyItem], key: string): PropertyItem =
+proc `{}`*(props: Table[string, ReactivePropertyItem], key: string): ReactivePropertyItem =
     return props.getOrDefault(key, nil)
 
 
@@ -112,26 +125,26 @@ proc `{}`*(props: Table[string, PropertyItem], key: string): PropertyItem =
 class BaseComponent:
 
     ## Component props passed into the compnent at render time
-    var props: Table[string, PropertyItem]
+    var props: Table[string, ReactivePropertyItem]
 
-    ## Children nodes, if any
+    ## Children nodes defined when the component was rendered, if any
     var children: seq[BaseComponent]
 
+    ## Actual rendered child nodes
+    var renderedChildren: seq[BaseComponent]
+
     ## Parent node, if any
-    var parent: BaseComponent = nil
+    var renderedParent: BaseComponent = nil
 
     ## Component state
-    var state: Table[string, PropertyItem]
+    var state: Table[string, ReactivePropertyItem]
 
     ## Private state flags
     var privateHasDoneNativeMount = false
     var privateHasDoneMount = false
 
     ## Render this component ... default implementation just renders children
-    method render(): BaseComponent =
-        let itm = BaseComponent.init()
-        itm.children = this.children
-        return itm
+    method render(): BaseComponent = nil
 
     ## Debug utility: Print out the component heirarchy from this point
     method printViewHeirarchy(depth: int = 0) =
@@ -140,7 +153,7 @@ class BaseComponent:
         echo "  ".repeat(depth) & "- " & $this
 
         # Print children
-        for child in this.children:
+        for child in this.renderedChildren:
             child.printViewHeirarchy(depth + 1)
 
 
@@ -173,6 +186,8 @@ class BaseComponent:
 
     ## Called on unmount
     method onNativeUnmount() = discard
+
+
 
 
 

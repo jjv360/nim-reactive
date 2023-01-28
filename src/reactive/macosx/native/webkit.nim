@@ -50,3 +50,6 @@ proc initWithFrame*(this: WKWebView, frame: CGRect, configuration: WKWebViewConf
 
 ## Loads the contents of the specified HTML string and navigates to it.
 proc loadHTMLString*(this: WKWebView, html: NSString, baseURL: NSURL = NSURL(nil)): WKNavigation {.importobjc, header:"<WebKit/WebKit.h>", discardable.}
+
+## Evaluates the specified JavaScript string.
+proc evaluateJavaScript*(this: WKWebView, javaScriptString: NSString, completionHandler: pointer = nil) {.importobjc, header:"<WebKit/WebKit.h>".}

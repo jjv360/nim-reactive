@@ -5,7 +5,10 @@
 import ./reactive/shared/basecomponent
 import ./reactive/shared/utils
 import ./reactive/shared/mounts
-export basecomponent, utils, mounts
+import ./reactive/shared/htmloutput
+import ./reactive/shared/htmlcomponents
+import ./reactive/shared/webview_bridge
+export basecomponent, utils, mounts, htmloutput, htmlcomponents, webview_bridge
 
 # DSL stuff ... we need to export some other libraries as well so they're available from the macro output
 import ./reactive/shared/componentsDSL
@@ -14,8 +17,8 @@ import classes
 export componentsDSL, tables, classes
 
 # Generic components
-# import ./reactive/components/window
-# export window
+# import ./reactive/shared/htmlcomponents
+# export htmlcomponents
 
 # Platform specific components
 when defined(windows):
@@ -28,7 +31,7 @@ when defined(windows):
 
 elif defined(macosx):
 
-    # Windows platform
+    # Mac OS X platform
     import ./reactive/macosx/dialogs
     import ./reactive/macosx/window
     import ./reactive/macosx/runloop
