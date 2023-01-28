@@ -3,6 +3,7 @@ import ./basecomponent
 import ./htmloutput
 import ./webview_bridge
 import std/oids
+import std/tables
 
 
 ##
@@ -13,7 +14,20 @@ class HTMLComponent of Component:
     var htmlOutput: ReactiveHTMLOutput = nil
 
     ## Update HTML output, return true if the HTML was changed
-    method renderHTML(): ReactiveHTMLOutput = nil
+    method renderHTML(): ReactiveHTMLOutput =
+
+        # Create component output
+        let html = ReactiveHTMLOutput.init()
+        html.tagName = "div"
+        html.setCSSFromProps(this.props)
+
+        # Add inner text if it has any
+        if this.props.hasKey("text"):
+            html.isTextElement = true
+            html.innerText = this.props["text"]
+
+        # Done
+        return html
 
     ## Called on component mount
     method onNativeMount() =
@@ -26,6 +40,7 @@ class HTMLComponent of Component:
         # Store it
         this.htmlOutput = output
         this.htmlOutput.privateTagID = $genOid()
+        this.htmlOutput.component = this
 
         # Get WebViewBridge parent
         let bridge = this.nearestWebBridge()
@@ -33,7 +48,7 @@ class HTMLComponent of Component:
             raiseAssert(this.className() & " is an HTML component, it must be rendered inside an HTML-based component (such as a Window).")
 
         # Notify bridge
-        bridge.onHTMLChildUpdate(this, this.htmlOutput)
+        bridge.onHTMLChildUpdate(this, this.htmlOutput, this.getRenderedParentID())
 
 
     ## Called on component unmount
@@ -55,6 +70,27 @@ class HTMLComponent of Component:
         this.htmlOutput = nil
 
 
+    ## Get the element ID of the nearest rendered parent
+    method getRenderedParentID(fromComponent: Component = nil): string =
+
+        # Set from
+        let fromComp = if fromComponent == nil: this.renderedParent else: fromComponent
+
+        # Check if it's an HTMLComponent and if it has rendered info
+        try:
+            let htmlComp = HTMLComponent(fromComp)
+            if htmlComp.htmlOutput != nil:
+                return htmlComp.htmlOutput.privateTagID
+        except ObjectConversionDefect:
+            discard
+
+        # Not found, continue up the chain
+        if fromComp.renderedParent == nil:
+            return ""
+        else:
+            return this.getRenderedParentID(fromComp.renderedParent)
+
+
 
 
 ##
@@ -63,28 +99,19 @@ class Div of HTMLComponent:
 
     ## Returns raw HTML component information
     method renderHTML(): ReactiveHTMLOutput =
-
-        # Create component output
-        let html = ReactiveHTMLOutput.init()
-        html.tagName = "div"
-        html.setCSSFromProps(this.props)
-
-        # Done
-        return html
+        let output = super.renderHTML()
+        output.tagName = "div"
+        return output
 
 
-## Represents text inside an element
+
+
+##
+## Rendered as a <font> tag
 class Text of HTMLComponent:
 
     ## Returns raw HTML component information
     method renderHTML(): ReactiveHTMLOutput =
-
-        # Create component output
-        let html = ReactiveHTMLOutput.init()
-        html.tagName = "font"
-        html.setCSSFromProps(this.props)
-        html.isTextElement = true
-        html.innerText = this.props{"text"}
-
-        # Done
-        return html
+        let output = super.renderHTML()
+        output.tagName = "font"
+        return output

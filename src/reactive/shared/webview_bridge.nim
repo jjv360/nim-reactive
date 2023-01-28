@@ -1,33 +1,30 @@
 import classes
 import std/oids
 import std/strutils
+import std/tables
 import ./basecomponent
 import ./htmloutput
-
-## JavaScript bridge code
-const bridgeJsCode = staticRead("webview_bridge.js")
 
 ## Escape JavaScriopt string, assuming it's injected with single quotation marks (')
 proc jsSanitize(input: string): string =
     return input.replace("'", "\\'").replace("\n", "\\n")
+
 
 ##
 ## Communicates between a WebView and the native app
 class WebViewBridge of Component:
 
     ## List of rendered HTML components
-    var renderedHtml: seq[ReactiveHTMLOutput]
+    var renderedElements: Table[string, ReactiveHTMLOutput]
 
     ## True if we've done the first injection
     var hasDoneFirstInject = false
 
-
     ## Called to inject JS into the page
     method injectJS(js: string) = raiseAssert("WebViewBridge.injectJS() must be implemented by subclasses.")
 
-
     ## Called when a child HTMLComponent is added/updated
-    method onHTMLChildUpdate(child: Component, html: ReactiveHTMLOutput) =
+    method onHTMLChildUpdate(child: Component, html: ReactiveHTMLOutput, parentTagID: string = "") =
 
         # Do first injection
         if not this.hasDoneFirstInject:
@@ -38,7 +35,7 @@ class WebViewBridge of Component:
             
                 // Add default styles
                 var elem = document.createElement('style')
-                elem.innerText = "
+                elem.innerText = `
                     html, body {
                         margin: 0px;
                         padding: 0px;
@@ -47,16 +44,25 @@ class WebViewBridge of Component:
                         -webkit-user-select: none;
                         overflow: hidden;
                     }
-                "
+                `
                 document.body.appendChild(elem)
+
+                // Prevent right click menu
+                document.addEventListener('contextmenu', function(e) {
+                    e.preventDefault()
+                })
             
             """)
+
+        # Store it
+        this.renderedElements[html.privateTagID] = html
         
         # Generate JS changes
         let js = """
 
             // Find it
             var elem = document.getElementById('""" & html.privateTagID.jsSanitize() & """')
+            var elemDidExist = elem
             if (!elem) {
 
                 // Not found, create it
@@ -70,16 +76,50 @@ class WebViewBridge of Component:
             elem.className = '""" & html.tagClass.jsSanitize() & """'
             elem.style.cssText = '""" & html.css.jsSanitize() & """'
 
+            // Update inner text
+            if (""" & $html.isTextElement & """)
+                elem.innerText = '""" & html.innerText.jsSanitize() & """'
+
+            // Update parent
+            var requestedParentID = '""" & parentTagID.jsSanitize() & """'
+            var currentParentID = elem.parentNode && elem.parentNode.id || ""
+            if (currentParentID != requestedParentID) {
+
+                // Remove from current parent
+                if (elem.parentNode)
+                    elem.parentNode.removeChild(elem)
+
+                // Add to parent
+                var newParent = document.getElementById(requestedParentID)
+                if (newParent)
+                    newParent.appendChild(elem)
+
+            }
+
+            // Execute JavaScript code on mount
+            if (!elemDidExist && """ & $html.jsOnMount.len & """) {
+
+                // Create function
+                function eventRunner(element) {
+                    """ & html.jsOnMount & """
+                }
+
+                // Run it
+                eventRunner(elem)
+
+            }
+
         """
 
         # Inject it
+        echo "======="
         echo js
         this.injectJS(js)
 
 
     ## Called when a child HTMLComponent is removed
     method onHTMLChildRemove(child: Component, html: ReactiveHTMLOutput) =
-        raiseAssert("WebViewBridge.onHTMLChildRemove() must be implemented by subclasses.")
+        raiseAssert("NOT IMPLEMETED YET")
 
 
 ## Get the nearest bridge component for a component

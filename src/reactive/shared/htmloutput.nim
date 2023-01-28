@@ -25,12 +25,34 @@ let supportedCSS = @[
     CSSProperty(propName: "height", isPx: true),
     CSSProperty(propName: "position"),
     CSSProperty(propName: "zIndex", cssName: "z-index"),
+    CSSProperty(propName: "boxSizing", cssName: "box-sizing"),
 
     # Layout fields
     CSSProperty(propName: "display"),
+    CSSProperty(propName: "padding", isPx: true),
+    CSSProperty(propName: "paddingLeft", cssName: "padding-left", isPx: true),
+    CSSProperty(propName: "paddingTop", cssName: "padding-top", isPx: true),
+    CSSProperty(propName: "paddingBottom", cssName: "padding-bottom", isPx: true),
+    CSSProperty(propName: "paddingRight", cssName: "padding-right", isPx: true),
+    CSSProperty(propName: "marginLeft", cssName: "margin-left", isPx: true),
+    CSSProperty(propName: "marginTop", cssName: "margin-top", isPx: true),
+    CSSProperty(propName: "marginBottom", cssName: "margin-bottom", isPx: true),
+    CSSProperty(propName: "marginRight", cssName: "margin-right", isPx: true),
+
+    # Flexbox fields
+    CSSProperty(propName: "flex"),
+    CSSProperty(propName: "justifyContent", cssName: "justify-content"),
+    CSSProperty(propName: "alignItems", cssName: "align-items"),
 
     # Appearance fields
     CSSProperty(propName: "backgroundColor", cssName: "background-color"),
+    CSSProperty(propName: "border"),
+    CSSProperty(propName: "borderBottom", cssName: "border-bottom"),
+    CSSProperty(propName: "borderTop", cssName: "border-top"),
+    CSSProperty(propName: "borderLeft", cssName: "border-left"),
+    CSSProperty(propName: "borderRight", cssName: "border-right"),
+    CSSProperty(propName: "boxShadow", cssName: "box-shadow"),
+    CSSProperty(propName: "textShadow", cssName: "text-shadow"),
 
 ]
 
@@ -57,6 +79,18 @@ class ReactiveHTMLOutput:
     ## Inner text for text elements
     var isTextElement = false
     var innerText = ""
+
+    ## JavaScript code to execute when this component is mounted. The code will have access to an `element` variable representing the DOM node.
+    var jsOnMount = ""
+
+    ## JavaScript code to execute when this component is updated. The code will have access to an `element` variable representing the DOM node.
+    var jsOnUpdate = ""
+
+    ## JavaScript code to execute when this component is removed. The code will have access to an `element` variable representing the DOM node.
+    var jsOnRemove = ""
+
+    ## The component attached to this rendered item
+    var component: Component
 
     ## Set CSS from a property bag
     method setCSSFromProps(props: Table[string, ReactivePropertyItem]) =
