@@ -7,7 +7,7 @@ import std/oids
 
 ##
 ## Represents an HTML component
-class HTMLComponent of BaseComponent:
+class HTMLComponent of Component:
 
     ## The HTML output
     var htmlOutput: ReactiveHTMLOutput = nil

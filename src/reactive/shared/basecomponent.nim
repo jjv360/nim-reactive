@@ -122,19 +122,19 @@ proc `{}`*(props: Table[string, ReactivePropertyItem], key: string): ReactivePro
 
 ##
 ## Base class for all Components.
-class BaseComponent:
+class Component:
 
     ## Component props passed into the compnent at render time
     var props: Table[string, ReactivePropertyItem]
 
     ## Children nodes defined when the component was rendered, if any
-    var children: seq[BaseComponent]
+    var children: seq[Component]
 
     ## Actual rendered child nodes
-    var renderedChildren: seq[BaseComponent]
+    var renderedChildren: seq[Component]
 
     ## Parent node, if any
-    var renderedParent: BaseComponent = nil
+    var renderedParent: Component = nil
 
     ## Component state
     var state: Table[string, ReactivePropertyItem]
@@ -144,7 +144,7 @@ class BaseComponent:
     var privateHasDoneMount = false
 
     ## Render this component ... default implementation just renders children
-    method render(): BaseComponent = nil
+    method render(): Component = nil
 
     ## Debug utility: Print out the component heirarchy from this point
     method printViewHeirarchy(depth: int = 0) =
@@ -202,7 +202,7 @@ class BaseComponent:
 
 # ##
 # ## Component class, represents something drawn on screen
-# class Component of BaseComponent:
+# class Component of Component:
 
 #     ## Native component renderer, if any.
 #     var nativeRenderer: ComponentRenderer
@@ -225,10 +225,10 @@ class BaseComponent:
 
 ##
 ## Group component which simply renders it's children
-class Group of BaseComponent
+class Group of Component
 
 
 ##
 ## Utility: Unmount this component
-template unmount*(component: BaseComponent) =
+template unmount*(component: Component) =
     ReactiveMountManager.unmount(component)

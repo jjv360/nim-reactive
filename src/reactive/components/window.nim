@@ -4,7 +4,7 @@ import webview
 
 ##
 ## This class represents an onscreen window that can render children as HTML.
-class Window of BaseComponent:
+class Window of Component:
 
     ## WebView
     var webview: Webview

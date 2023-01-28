@@ -17,7 +17,7 @@ import std/asyncdispatch
 import classes
 
 # Main app window
-class MainWindow of BaseComponent:
+class App of Component:
 
     ## Called when the window is created
     method onMount() =
@@ -31,13 +31,16 @@ class MainWindow of BaseComponent:
 
         echo "Main window closed"
 
-    method render(): BaseComponent = components:
+    method render(): Component = components:
 
-        # Background
-        Div(backgroundColor: "#222", position: "absolute", top: 0, left: 0, width: "100%", height: "100%")
+        # App Window
+        Window(x: 50, y: 50, width: 200, height: 200, title: "Notepad"):
 
-        # Header
-        Div(backgroundColor: "#333", position: "absolute", top: 0, left: 0, width: "100%", height: 50, )
+            # Background
+            Div(backgroundColor: "#222", position: "absolute", top: 0, left: 0, width: "100%", height: "100%")
+
+            # Header
+            Div(backgroundColor: "#333", position: "absolute", top: 0, left: 0, width: "100%", height: 50, display: "flex", alignItems: "center")
 
 
 # Start the app
@@ -45,17 +48,7 @@ reactiveStart:
     
     # Create main window
     reactiveMount:
-        MainWindow(x: 50, y: 50, width: 200, height: 200, title: "Notepad")
-        # BaseComponent
-        # BaseComponent()
-        # BaseComponent(item = "value", second = 2)
-        # BaseComponent(item: "value", second: 2)
-        # BaseComponent(item: "value", second: 2):
-        #     BaseComponent(second: "another", item: 1, doubleer: 2, cb: proc() = echo "Hi")
-        # BaseComponent(item = "value", second = 2):
-        #     BaseComponent(second: "another", item: 1, doubleer: 2, cb: proc() = echo "Hi")
-        # BaseComponent:
-        #     BaseComponent(second: "another", item: 1, doubleer: 2, cb: proc() = echo "Hi")
+        App()
 
     # proc t() {.async.} =
     #     while true:

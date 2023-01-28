@@ -13,7 +13,7 @@ proc jsSanitize(input: string): string =
 
 ##
 ## Communicates between a WebView and the native app
-class WebViewBridge of BaseComponent:
+class WebViewBridge of Component:
 
     ## List of rendered HTML components
     var renderedHtml: seq[ReactiveHTMLOutput]
@@ -27,7 +27,7 @@ class WebViewBridge of BaseComponent:
 
 
     ## Called when a child HTMLComponent is added/updated
-    method onHTMLChildUpdate(child: BaseComponent, html: ReactiveHTMLOutput) =
+    method onHTMLChildUpdate(child: Component, html: ReactiveHTMLOutput) =
 
         # Do first injection
         if not this.hasDoneFirstInject:
@@ -78,12 +78,12 @@ class WebViewBridge of BaseComponent:
 
 
     ## Called when a child HTMLComponent is removed
-    method onHTMLChildRemove(child: BaseComponent, html: ReactiveHTMLOutput) =
+    method onHTMLChildRemove(child: Component, html: ReactiveHTMLOutput) =
         raiseAssert("WebViewBridge.onHTMLChildRemove() must be implemented by subclasses.")
 
 
 ## Get the nearest bridge component for a component
-proc nearestWebBridge*(component: BaseComponent): WebViewBridge =
+proc nearestWebBridge*(component: Component): WebViewBridge =
 
     # Stop if nil
     if component == nil:

@@ -35,7 +35,7 @@ proc registerWindowClass*(): string =
 
 ##
 ## This class represents an onscreen window.
-class Window of BaseComponent:
+class Window of Component:
 
     ## Backend window info
     var hwnd: HWND = 0

@@ -7,10 +7,10 @@ import ./basecomponent
 singleton ReactiveMountManager:
 
     ## List of mounted components
-    var mountedComponents: seq[BaseComponent]
+    var mountedComponents: seq[Component]
 
     ## Find the mounted root component for a component tree
-    method findMountedComponent(component: BaseComponent): BaseComponent =
+    method findMountedComponent(component: Component): Component =
 
         # Find parent which is mounted
         var node = component
@@ -25,7 +25,7 @@ singleton ReactiveMountManager:
 
 
     ## Mount a component
-    method mount(component: BaseComponent) =
+    method mount(component: Component) =
 
         # Stop if already mounted
         if this.findMountedComponent(component) != nil:
@@ -39,7 +39,7 @@ singleton ReactiveMountManager:
 
 
     ## Unmount a component tree, starting from the nearest mounted parent
-    method unmount(component: BaseComponent) =
+    method unmount(component: Component) =
         
         # Find parent which is mounted, stop if not found since that means this component tree is already unmounted
         let rootComponent = this.findMountedComponent(component)
@@ -57,7 +57,7 @@ singleton ReactiveMountManager:
 
 
     ## Unmount a single component
-    method unmountSingle(component: BaseComponent) =
+    method unmountSingle(component: Component) =
 
         # Stop if nil
         if component == nil:
@@ -73,7 +73,7 @@ singleton ReactiveMountManager:
 
 
     ## Render a component
-    method renderComponent(component: BaseComponent) =
+    method renderComponent(component: Component) =
 
         # Perform native mount
         if not component.privateHasDoneNativeMount:
