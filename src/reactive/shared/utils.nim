@@ -3,6 +3,7 @@
 import std/mimetypes
 import std/base64
 import std/os
+import std/strutils
 
 ## Generate a static data URI for a file and embed it as a string
 proc staticDataURI*(filename: static[string]): string =
@@ -10,7 +11,12 @@ proc staticDataURI*(filename: static[string]): string =
     # Get path of function caller
     let callerFileName = instantiationInfo(fullPaths = true).filename
     let callerDir = parentDir(callerFileName)
-    let absoluteFilename = absolutePath(filename, callerDir)
+    var absoluteFilename = absolutePath(filename, callerDir)
+
+    # HACK: Workaround for cross-compiling Windows on *nix, seems Nim uses \ instead of / in the static context
+    when defined(windows):
+        if absoluteFilename.startsWith("\\") and not absoluteFilename.startsWith("\\\\"):
+            absoluteFilename = absoluteFilename.replace("\\", "/")
 
     # Get file data
     let data = staticRead(absoluteFilename)
