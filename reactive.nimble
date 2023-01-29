@@ -4,7 +4,7 @@ author          = "Josh Fox"
 description     = "Create reactive UI apps"
 license         = "MIT"
 srcDir          = "src"
-installExt      = @["nim", "png"]
+installExt      = @["nim", "png", "dll"]
 
 
 # Dependencies

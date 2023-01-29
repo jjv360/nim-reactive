@@ -1,4 +1,5 @@
 import std/tables
+import std/browsers
 import classes
 import winim/lean
 import ../shared/basecomponent
@@ -6,6 +7,7 @@ import ../shared/mounts
 import ../shared/webview_bridge
 import ../shared/htmloutput
 import ../shared/htmlcomponents
+import ./dialogs
 import ./native/webview2
 
 ## List of all active windows
@@ -45,6 +47,32 @@ class Window of WebViewBridge:
 
     ## Called when this component is mounted
     method onNativeMount() =
+
+        # Check if WebView2 is available
+        if not WebView2.isInstalled():
+
+            # Prompt the user to ask to install it
+            # TODO: Automatically download and install it, showing the user the progress...
+            alert(
+                text = "This app requires the WebView2 component.", 
+                title = "Missing component", 
+                icon = dlgQuestion
+            )
+
+            # Open the download URL with the official download URL from Microsoft
+            openDefaultBrowser("https://go.microsoft.com/fwlink/p/?LinkId=2124703")
+
+            # Quit the app
+            echo "[NimReactive] Exiting since WebView2 is missing."
+            quit(3)
+
+        # Initialize WebView2
+        echo "WebView v " & WebView2.versionInfo()
+        # CreateCoreWebView2EnvironmentWithOptions(environmentCreatedHandler = 
+        #     proc(resultOut: HRESULT, env: pointer): HRESULT =
+        #         echo "HERE " & $resultOut
+        #         return S_OK
+        # )
 
         # Create the native window
         this.hwnd = CreateWindowEx(
