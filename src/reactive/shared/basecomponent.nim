@@ -4,6 +4,22 @@ import std/strutils
 
 
 ##
+## Represents an event
+class ReactiveEvent:
+
+    ## Event name
+    var name = ""
+
+    ## Event value
+    var value = ""
+
+    ## Constructor
+    method init(name: string, value: string = "") =
+        this.name = name
+        this.value = value
+
+
+##
 ## Property item within a property bundle
 class ReactivePropertyItem:
 
@@ -11,7 +27,7 @@ class ReactivePropertyItem:
     var stringValue = ""
     var intValue = 0
     var floatValue = 0.0
-    var procValue: proc() = nil
+    var procValue: proc(arg: ReactiveEvent) = nil
 
     ## Original value type
     var isString = false
@@ -54,6 +70,16 @@ converter propFromInt*(value: int) : ReactivePropertyItem =
     item.isNumber = true
     return item
 
+## Convert a bool to a ReactivePropertyItem
+converter propFromBool*(value: bool) : ReactivePropertyItem =
+    let item = ReactivePropertyItem.init()
+    item.stringValue = $value
+    item.intValue = if value: 1 else: 0
+    item.floatValue = if value: 1 else: 0
+    item.isInt = true
+    item.isNumber = true
+    return item
+
 ## Convert a float to a ReactivePropertyItem
 converter propFromFloat*(value: float) : ReactivePropertyItem =
     let item = ReactivePropertyItem.init()
@@ -64,21 +90,39 @@ converter propFromFloat*(value: float) : ReactivePropertyItem =
     item.isNumber = true
     return item
 
-## Convert a proc to a ReactivePropertyItem
-converter propFromProc*(value: proc()) : ReactivePropertyItem =
+## Convert an event proc to a ReactivePropertyItem
+converter propFromProc*(value: proc(event: ReactiveEvent)) : ReactivePropertyItem =
     let item = ReactivePropertyItem.init()
     item.procValue = value
     item.stringValue = "<proc>"
+    item.intValue = 1
+    item.floatValue = 1
+    item.isProc = true
+    return item
+
+## Convert a proc to a ReactivePropertyItem
+converter propFromProc*(value: proc()) : ReactivePropertyItem =
+    let item = ReactivePropertyItem.init()
+    item.procValue = proc(_: ReactiveEvent) = value()
+    item.stringValue = "<proc>"
+    item.intValue = 1
+    item.floatValue = 1
     item.isProc = true
     return item
 
 ## Save a proc to a ReactivePropertyItem ... this is necessary because the converter from proc doesn't seem to work
-proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: proc()) =
+proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: proc(event: ReactiveEvent)) =
     let item = ReactivePropertyItem.init()
     item.procValue = value
     item.stringValue = "<proc>"
+    item.intValue = 1
+    item.floatValue = 1
     item.isProc = true
     props[name] = item
+
+## Save a proc to a ReactivePropertyItem ... this is necessary because the converter from proc doesn't seem to work
+proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: proc()) =
+    props[name] = proc(_: ReactiveEvent) = value()
 
 ## HACK: Save a ReactivePropertyItem to the property list ... somehow the above function is being called in this case without this...
 proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: ReactivePropertyItem) =
@@ -117,9 +161,14 @@ converter propToFloat*(item: ReactivePropertyItem) : float =
     return item.floatValue
 
 ## Convert a ReactivePropertyItem to a proc
-converter propToProc*(item: ReactivePropertyItem) : proc() = 
+converter propToProc*(item: ReactivePropertyItem) : proc(event: ReactiveEvent) = 
     if item == nil: return nil
     return item.procValue
+
+## Convert a ReactivePropertyItem to a bool
+converter propToBool*(item: ReactivePropertyItem) : bool = 
+    if item == nil: return false
+    return item.intValue != 0
 
 ## Utility to get an optional value from the property bag
 proc `{}`*(props: Table[string, ReactivePropertyItem], key: string): ReactivePropertyItem =
@@ -183,6 +232,21 @@ class Component:
 
         # Done
         return str
+
+
+    ## Trigger an event
+    method sendEventToProps(name: string, value: string = "") = 
+        let event = ReactiveEvent.init(name, value)
+        let handlerProp = this.props{name}
+        if handlerProp != nil and handlerProp.procValue != nil:
+            handlerProp.procValue(event)
+
+
+    ## Trigger an event
+    method sendEventToProps(event: ReactiveEvent) = 
+        let handlerProp = this.props{event.name}
+        if handlerProp != nil and handlerProp.procValue != nil:
+            handlerProp.procValue(event)
 
 
     ## Called when the component is first mounted ... this is used by native code to create the necessary UI etc

@@ -30,3 +30,10 @@ proc staticDataURI*(filename: static[string]): string =
 
     # Done, generate URL
     return "data:" & mime & ";base64," & base64data
+
+
+## getOrDefault for seq's
+proc getOrDefault* [T] (this: seq[T], idx: int, default: T = nil): T =
+    if idx < 0: return default
+    if idx >= this.len: return default
+    else: return this[idx]

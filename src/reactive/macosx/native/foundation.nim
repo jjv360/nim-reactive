@@ -66,9 +66,20 @@ proc description*(obj: NSObject): NSString {.importobjc, header:"<Foundation/Fou
 ## A representation of a specific point in time, independent of any calendar or time zone.
 type NSDate* = distinct NSObject
 
+## A number of seconds.
+type NSTimeInterval = float64
+
 ## A date object representing a date in the distant past.
 proc NSDate_distantPast(): NSDate {.header:"<Foundation/Foundation.h>", importobjc:"NSDate distantPast".}
 proc distantPast*(_: typedesc[NSDate]): NSDate = NSDate_distantPast()
+
+## Creates and returns a date object set to the given number of seconds from 00:00:00 UTC on 1 January 1970.
+proc NSDate_dateWithTimeIntervalSince1970(secs: NSTimeInterval): NSDate {.header:"<Foundation/Foundation.h>", importobjc:"NSDate dateWithTimeIntervalSince1970".}
+proc dateWithTimeIntervalSince1970*(_: typedesc[NSDate], secs: NSTimeInterval): NSDate = NSDate_dateWithTimeIntervalSince1970(secs)
+
+## Creates and returns a date object set to a given number of seconds from the current date and time.
+proc NSDate_dateWithTimeIntervalSinceNow(secs: NSTimeInterval): NSDate {.header:"<Foundation/Foundation.h>", importobjc:"NSDate dateWithTimeIntervalSinceNow".}
+proc dateWithTimeIntervalSinceNow*(_: typedesc[NSDate], secs: NSTimeInterval): NSDate = NSDate_dateWithTimeIntervalSinceNow(secs)
 
 
 

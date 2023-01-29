@@ -1,4 +1,8 @@
 import std/macros
+import std/sugar
+
+## Exports that need to be exposed for lib users
+export sugar.capture
 
 
 ## Convert a single command to output code
@@ -70,8 +74,7 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
             else:
 
                 # Something else, unknown
-                echo cmd.treeRepr
-                raiseAssert("Unable to parse DSL, please check your syntax.")
+                error("Unable to parse DSL, please check your syntax.", child)
             
         # Go through children components
         for idx, child in cmd[1]:
@@ -90,7 +93,39 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
 
         return (code, nodeVarName)
 
+    elif cmd.kind == nnkCall and cmd[0].kind == nnkIdent and $cmd[0] == "mapIt":
+
+        # Checks
+        if cmd[2].kind != nnkStmtList: error("Missing code block for mapIt().", cmd)
+        if cmd[2].len != 1: error("There should only be one rendered component for mapIt().", cmd)
+
+        # DSL for mapping an array to components
+        let arrayStmt = cmd[1]
+        let componentCmd = cmd[2][0]
+        let nodeClassIdent = ident"Group"
+        let itIdent = ident"it"
+        let idxIdent = ident"idx"
+        var code = nnkStmtList.newNimNode()
+
+        # Generate loop body
+        let gen = componentsConvertSingle(componentCmd)
+        let varIdent = gen.varIdent
+        let loopBody = gen.code
+
+        # Generate code
+        code.add(quote do:
+            let `nodeVarName` = `nodeClassIdent`.init()
+            for `idxIdent`, `itIdent` in `arrayStmt`:
+                capture `idxIdent`, `itIdent`:
+                    `loopBody`
+                    `nodeVarName`.children.add(`varIdent`)
+        )
+
+        # Done
+        return (code, nodeVarName)
+
     elif cmd.kind == nnkCall or cmd.kind == nnkObjConstr:
+
 
         # Render a single component, with props and possibly children in the Function Call format, ie: Comp(prop = name): ChildComp()
         let nodeClassIdent = cmd[0]
@@ -139,8 +174,7 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
             else:
 
                 # Something else, unknown
-                echo cmd.treeRepr
-                raiseAssert("Unable to parse DSL, please check your syntax.")
+                error("Unable to parse DSL, please check your syntax.", cmd)
             
         # Go through children components
         if hasChildrenAtEnd:
@@ -163,8 +197,7 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
     else:
 
         # Unknown command format
-        echo cmd.treeRepr
-        raiseAssert("Unable to parse DSL, please check your syntax.")
+        error("Unable to parse DSL, please check your syntax.", cmd)
 
 
 
@@ -182,8 +215,7 @@ proc componentsConvert(input: NimNode): NimNode =
 
     # Check input
     if input.kind != nnkStmtList:
-        echo input.treeRepr
-        raiseAssert("Unable to parse DSL, please check your syntax.")
+        error("Unable to parse DSL, please check your syntax.", input)
 
     # Create final node as a group
     output.add(quote do:
@@ -204,14 +236,6 @@ proc componentsConvert(input: NimNode): NimNode =
         output.add(quote do:
             `finalNode`.children.add(`varIdent`)
         )
-
-    # echo input.treeRepr
-    # raiseAssert("D")
-    
-    
-    # let tst = quote do:
-    #     let `finalNode` = `Group`.init()
-    #     echo "HERE"
 
     # Done
     return output

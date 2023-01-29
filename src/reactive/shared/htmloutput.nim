@@ -4,6 +4,12 @@ import classes
 import ./basecomponent
 
 
+
+## Convert a string to a JavaScript string which can be inserted into JS code
+proc jsQuotedString*(input: string): string =
+    return "'" & input.replace("'", "\\'").replace("\n", "\\n") & "'"
+
+
 ##
 ## Supported CSS property info
 type CSSProperty = object
@@ -68,6 +74,7 @@ let supportedCSS = @[
     CSSProperty(propName: "backgroundPosition", cssName: "background-position"),
     CSSProperty(propName: "backgroundRepeat", cssName: "background-repeat"),
     CSSProperty(propName: "backgroundImage", cssName: "background-image"),
+    CSSProperty(propName: "outline"),
 
     # Text fields
     CSSProperty(propName: "color"),

@@ -21,11 +21,6 @@ class HTMLComponent of Component:
         html.tagName = "div"
         html.setCSSFromProps(this.props)
 
-        # Add inner text if it has any
-        if this.props.hasKey("text"):
-            html.isTextElement = true
-            html.innerText = this.props["text"]
-
         # Done
         return html
 
@@ -129,6 +124,11 @@ class Div of HTMLComponent:
         let output = super.renderHTML()
         output.tagName = "div"
 
+        # Add inner text if it has any
+        if this.props.hasKey("text"):
+            output.isTextElement = true
+            output.innerText = this.props["text"]
+
         # Attach handlers to JavaScript
         if this.props.hasKey("onClick"):
             output.jsOnMount &= ";\n element.onclick = function(e) { window.nimreactiveEmit(element.id, 'event:onClick') } "
@@ -149,26 +149,9 @@ class Div of HTMLComponent:
     method onJsEvent(name: string, data: string) =
 
         # Check event
-        if name == "event:onClick":
-
-            # Call handler
-            let handlerProp = this.props{"onClick"}
-            if handlerProp != nil and handlerProp.procValue != nil:
-                handlerProp.procValue()
-        
-        elif name == "event:onMouseOver":
-
-            # Call handler
-            let handlerProp = this.props{"onMouseOver"}
-            if handlerProp != nil and handlerProp.procValue != nil:
-                handlerProp.procValue()
-        
-        elif name == "event:onMouseOut":
-
-            # Call handler
-            let handlerProp = this.props{"onMouseOut"}
-            if handlerProp != nil and handlerProp.procValue != nil:
-                handlerProp.procValue()
+        if name == "event:onClick":         this.sendEventToProps("onClick")
+        elif name == "event:onMouseOver":   this.sendEventToProps("onMouseOver")
+        elif name == "event:onMouseOut":    this.sendEventToProps("onMouseOut")
 
 
 
@@ -181,4 +164,42 @@ class Text of HTMLComponent:
     method renderHTML(): ReactiveHTMLOutput =
         let output = super.renderHTML()
         output.tagName = "font"
+
+        # Add inner text
+        output.isTextElement = true
+        output.innerText = this.props{"text"}
         return output
+
+
+
+
+##
+## Rendered as a <textarea> tag
+class TextArea of HTMLComponent:
+
+    ## Returns raw HTML component information
+    method renderHTML(): ReactiveHTMLOutput =
+        let output = super.renderHTML()
+        output.tagName = "textarea"
+
+        # Add current value
+        let js = ";\n element.value = " & this.props{"text"}.string.jsQuotedString()
+        output.jsOnMount = js
+        output.jsOnUpdate = js
+
+        # Add change listener
+        if this.props{"onValue"}:
+            let js = ";\n element.oninput = function(e) { window.nimreactiveEmit(element.id, 'event:onValue', e.target.value) } "
+            output.jsOnMount &= js
+            output.jsOnUpdate &= js
+
+        return output
+
+
+    ## Called when an event is received from the JS side
+    method onJsEvent(name: string, data: string) =
+
+        # Check event
+        if name == "event:onValue":
+            this.sendEventToProps("onValue", data)
+

@@ -29,6 +29,7 @@ var reactiveJsInject*: seq[string] = @[
 
         // Prevent right click menu
         document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName.toLowerCase() == "textarea") return
             e.preventDefault()
         })
 
@@ -51,11 +52,6 @@ var reactiveJsInject*: seq[string] = @[
     """
 
 ]
-
-
-## Escape JavaScriopt string, assuming it's injected with single quotation marks (')
-proc jsSanitize(input: string): string =
-    return input.replace("'", "\\'").replace("\n", "\\n")
 
 
 ##
@@ -95,27 +91,27 @@ class WebViewBridge of Component:
         let js = """
 
             // Find it
-            var element = document.getElementById('""" & html.privateTagID.jsSanitize() & """')
+            var element = document.getElementById(""" & html.privateTagID.jsQuotedString() & """)
             var elemDidExist = element
             if (!element) {
 
                 // Not found, create it
-                element = document.createElement('""" & html.tagName.jsSanitize() & """')
-                element.id = '""" & html.privateTagID.jsSanitize() & """'
+                element = document.createElement(""" & html.tagName.jsQuotedString() & """)
+                element.id = """ & html.privateTagID.jsQuotedString() & """;
                 document.body.appendChild(element)
 
             }
 
             // Update details
-            element.className = '""" & html.tagClass.jsSanitize() & """'
-            element.style.cssText = '""" & html.css.jsSanitize() & """'
+            element.className = """ & html.tagClass.jsQuotedString() & """;
+            element.style.cssText = """ & html.css.jsQuotedString() & """;
 
             // Update inner text
             if (""" & $html.isTextElement & """)
-                element.innerText = '""" & html.innerText.jsSanitize() & """'
+                element.innerText = """ & html.innerText.jsQuotedString() & """;
 
             // Update parent
-            var requestedParentID = '""" & parentTagID.jsSanitize() & """'
+            var requestedParentID = """ & parentTagID.jsQuotedString() & """;
             var currentParentID = element.parentNode && element.parentNode.id || ""
             if (currentParentID != requestedParentID) {
 
@@ -156,7 +152,9 @@ class WebViewBridge of Component:
 
         # Inject it
         # echo "======="
-        # echo html.css
+        # echo js
+        # echo ""
+        # echo ""
         this.injectJS(js)
 
 
@@ -170,7 +168,7 @@ class WebViewBridge of Component:
         let js = """
 
             // Find it
-            var element = document.getElementById('""" & html.privateTagID.jsSanitize() & """')
+            var element = document.getElementById(""" & html.privateTagID.jsQuotedString() & """)
             if (element) {
 
                 // Remove from current parent

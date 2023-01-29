@@ -1,5 +1,6 @@
 # import ./dialogs
 import std/asyncdispatch
+import std/os
 import ./dialogs
 import ./native/foundation
 import ./native/appkit
@@ -23,7 +24,8 @@ proc reactiveStart*(code: proc()) =
             while true:
 
                 # Get next event
-                let event = NSApplication.sharedApplication.nextEventMatchingMask(NSEventMaskAny, untilDate = NSDate.distantPast, inMode = NSDefaultRunLoopMode, dequeue = true)
+                let blockUntil = NSDate.dateWithTimeIntervalSinceNow(0.002)
+                let event = NSApplication.sharedApplication.nextEventMatchingMask(NSEventMaskAny, untilDate = blockUntil, inMode = NSDefaultRunLoopMode, dequeue = true)
                 if pointer(event) == nil:
                     break
 
@@ -32,7 +34,7 @@ proc reactiveStart*(code: proc()) =
         
             # Drain the asyncdispatch event queue
             if asyncdispatch.hasPendingOperations():
-                asyncdispatch.drain(1)
+                asyncdispatch.drain(timeout = 2)
 
             # Quit the app if there's no pending operations on asyncdispatch and there's no rendered windows
             if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:
