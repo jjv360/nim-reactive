@@ -56,7 +56,7 @@ var reactiveJsInject*: seq[string] = @[
 
 ##
 ## Communicates between a WebView and the native app
-class WebViewBridge of Component:
+class WebViewBridge of NativeComponent:
 
     ## List of rendered HTML components
     var renderedElements: Table[string, ReactiveHTMLOutput]
@@ -78,7 +78,7 @@ class WebViewBridge of Component:
         this.injectJS(reactiveJsInject.join(";\n"))
 
 
-    ## Called when a child HTMLComponent is added/updated
+    ## Called when a child WebComponent is added/updated
     method onHTMLChildUpdate(child: Component, html: ReactiveHTMLOutput, parentTagID: string = "") =
 
         # Do first injection
@@ -158,7 +158,7 @@ class WebViewBridge of Component:
         this.injectJS(js)
 
 
-    ## Called when a child HTMLComponent is removed
+    ## Called when a child WebComponent is removed
     method onHTMLChildRemove(child: Component, html: ReactiveHTMLOutput) =
         
         # Remove it

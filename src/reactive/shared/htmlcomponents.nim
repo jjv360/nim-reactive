@@ -8,7 +8,7 @@ import std/tables
 
 ##
 ## Represents an HTML component
-class HTMLComponent of Component:
+class WebComponent of Component:
 
     ## The HTML output
     var htmlOutput: ReactiveHTMLOutput = nil
@@ -94,9 +94,9 @@ class HTMLComponent of Component:
         # Set from
         let fromComp = if fromComponent == nil: this.renderedParent else: fromComponent
 
-        # Check if it's an HTMLComponent and if it has rendered info
+        # Check if it's an WebComponent and if it has rendered info
         try:
-            let htmlComp = HTMLComponent(fromComp)
+            let htmlComp = WebComponent(fromComp)
             if htmlComp.htmlOutput != nil:
                 return htmlComp.htmlOutput.privateTagID
         except ObjectConversionDefect:
@@ -117,7 +117,7 @@ class HTMLComponent of Component:
 
 ##
 ## Represents a <div> tag
-class Div of HTMLComponent:
+class Div of WebComponent:
 
     ## Returns raw HTML component information
     method renderHTML(): ReactiveHTMLOutput =
@@ -158,7 +158,7 @@ class Div of HTMLComponent:
 
 ##
 ## Rendered as a <font> tag
-class Text of HTMLComponent:
+class Text of WebComponent:
 
     ## Returns raw HTML component information
     method renderHTML(): ReactiveHTMLOutput =
@@ -175,7 +175,7 @@ class Text of HTMLComponent:
 
 ##
 ## Rendered as a <textarea> tag
-class TextArea of HTMLComponent:
+class TextArea of WebComponent:
 
     ## Returns raw HTML component information
     method renderHTML(): ReactiveHTMLOutput =

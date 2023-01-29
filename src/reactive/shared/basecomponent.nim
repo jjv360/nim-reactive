@@ -248,15 +248,8 @@ class Component:
         if handlerProp != nil and handlerProp.procValue != nil:
             handlerProp.procValue(event)
 
-
-    ## Called when the component is first mounted ... this is used by native code to create the necessary UI etc
-    method onNativeMount() = discard
-
     ## Called when the component has been mounted
     method onMount() = discard
-
-    ## Called when the component has been updated
-    method onNativeUpdate() = discard
 
     ## Called when the component has been updated
     method onUpdate() = discard
@@ -264,8 +257,20 @@ class Component:
     ## Called when the component has been unmounted
     method onUnmount() = discard
 
+    ## Called when the component is first mounted
+    method onNativeMount() = discard
+
+    ## Called when the component has been updated
+    method onNativeUpdate() = discard
+
     ## Called on unmount
     method onNativeUnmount() = discard
+
+
+
+##
+## Base class for native Components.
+class NativeComponent of Component
 
 
 

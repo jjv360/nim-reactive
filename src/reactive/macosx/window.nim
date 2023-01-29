@@ -93,7 +93,7 @@ class Window of WebViewBridge:
         let targetID = msg{"elementID"}.getStr()
         let element = this.renderedElements.getOrDefault(targetID, nil)
         if element == nil: return
-        let component = HTMLComponent(element.component)
+        let component = WebComponent(element.component)
         
         # Notify it
         component.onJsEvent(msg{"name"}.getStr(), msg{"data"}.getStr())
