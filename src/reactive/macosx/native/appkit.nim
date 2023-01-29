@@ -9,44 +9,53 @@ import ./foundation
 {.passL:"-framework AppKit".}
 
 #### NSEvent
+objcImport:
 
-## An object that contains information about an input action, such as a mouse click or a key press.
-type NSEvent* = distinct pointer
+    ## An object that contains information about an input action, such as a mouse click or a key press.
+    header "<AppKit/AppKit.h>"
+    importClass NSEvent of NSObject
 
-## Constants that you use to filter out specific event types from the stream of incoming events.
-type NSEventMask* {.importc, header:"<AppKit/AppKit.h>".} = uint64
+    ## Constants that you use to filter out specific event types from the stream of incoming events.
+    type NSEventMask* {.importc, header:"<AppKit/AppKit.h>".} = uint64
 
-## A mask that matches any type of event.
-let NSEventMaskAny* {.importc, header:"<AppKit/AppKit.h>".} : NSEventMask
+    ## A mask that matches any type of event.
+    let NSEventMaskAny* {.importc, header:"<AppKit/AppKit.h>".} : NSEventMask
 
 
 
 #### NSApplication
+objcImport:
 
-## An object that manages an app’s main event loop and resources used by all of that app’s objects.
-type NSApplication* = distinct NSObject
+    ## An object that contains information about an input action, such as a mouse click or a key press.
+    header "<AppKit/AppKit.h>"
+    importClass NSApplication of NSObject
 
-## Called by the main function to create and run the application.
-proc NSApplicationMain*(argc: cint, argv: cstringArray) {.importc, header:"<AppKit/AppKit.h>".}
+    ## Called by the main function to create and run the application.
+    proc NSApplicationMain*(argc: cint, argv: cstringArray) {.importc, header:"<AppKit/AppKit.h>".}
 
-## Returns the application instance, creating it if it doesn’t exist yet.
-proc NSApplication_sharedApplication(): NSApplication {.importobjc:"NSApplication sharedApplication", header:"<AppKit/AppKit.h>".}
-proc sharedApplication*(_: typedesc[NSApplication]): NSApplication = NSApplication_sharedApplication()
+    # Static methods
+    importStaticMethods(NSApplication):
 
-## Returns the next event matching a given mask, or `nil` if no such event is found before a specified expiration date.
-proc nextEventMatchingMask*(this: NSApplication, mask: NSEventMask, untilDate: NSDate, inMode: NSRunLoopMode, dequeue: bool): NSEvent {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## Returns the application instance, creating it if it doesn’t exist yet.
+        proc sharedApplication*(): NSApplication
 
-## Dispatches an event to other objects.
-proc sendEvent*(this: NSApplication, event: NSEvent) {.importobjc, header:"<AppKit/AppKit.h>".}
+    # Methods
+    importClassMethods(NSApplication):
 
-## A Boolean value indicating whether this is the active app.
-proc active*(this: NSApplication): bool {.importobjc:"isActive", header:"<AppKit/AppKit.h>".}
+        ## Returns the next event matching a given mask, or `nil` if no such event is found before a specified expiration date.
+        proc nextEventMatchingMask*(mask: NSEventMask, untilDate: NSDate, inMode: NSRunLoopMode, dequeue: bool): NSEvent
 
-## Makes the receiver the active app.
-proc activateIgnoringOtherApps*(this: NSApplication, ignore: bool = true) {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## Dispatches an event to other objects.
+        proc sendEvent*(event: NSEvent)
 
-## Deactivates the receiver.
-proc deactivate*(this: NSApplication) {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## A Boolean value indicating whether this is the active app.
+        proc active*(): bool
+
+        ## Makes the receiver the active app.
+        proc activateIgnoringOtherApps*(ignore: bool = true)
+
+        ## Deactivates the receiver.
+        proc deactivate*()
 
 
 
@@ -105,73 +114,82 @@ let NSBackingStoreBuffered* {.importc, header:"<AppKit/AppKit.h>".} : NSBackingS
 
 
 #### NSScreen
+objcImport:
 
-## An object that describes the attributes of a computer’s monitor or screen.
-type NSScreen* = distinct NSObject
+    ## An object that describes the attributes of a computer’s monitor or screen.
+    header "<AppKit/AppKit.h>"
+    importClass NSScreen of NSObject
 
-## Returns the screen object containing the window with the keyboard focus.
-proc NSScreen_mainScreen(): NSScreen {.importc, header:"<AppKit/AppKit.h>".}
-proc mainScreen*(_: typedesc[NSScreen]) = NSScreen_mainScreen()
+    # Static methods
+    importStaticMethods(NSScreen):
+
+        ## Returns the screen object containing the window with the keyboard focus.
+        proc mainScreen*(): NSScreen
 
 
 
 
 #### NSView
+objcImport:
 
-## The infrastructure for drawing, printing, and handling events in an app.
-type NSView* = distinct NSObject
+    ## The infrastructure for drawing, printing, and handling events in an app.
+    header "<AppKit/AppKit.h>"
+    importClass NSView of NSObject
 
-## The view that is the parent of the current view.
-proc superview*(this: NSView): NSView {.importc, header:"<AppKit/AppKit.h>".}
+    # Methods
+    importClassMethods(NSView):
 
-## Adds a view to the view’s subviews so it’s displayed above its siblings.
-proc addSubview*(this: NSView, child: NSView) {.importc, header:"<AppKit/AppKit.h>".}
+        ## The view that is the parent of the current view.
+        proc superview*(): NSView
 
-## Unlinks the view from its superview and its window, removes it from the responder chain, and invalidates its cursor rectangles.
-proc removeFromSuperview*(this: NSView) {.importc, header:"<AppKit/AppKit.h>".}
+        ## Adds a view to the view’s subviews so it’s displayed above its siblings.
+        proc addSubview*(child: NSView)
+
+        ## Unlinks the view from its superview and its window, removes it from the responder chain, and invalidates its cursor rectangles.
+        proc removeFromSuperview*()
 
 
 
 
 #### NSWindow
+objcImport:
 
-## A window that an app displays on the screen.
-type NSWindow* = distinct NSObject
+    ## A window that an app displays on the screen.
+    header "<AppKit/AppKit.h>"
+    importClass NSWindow of NSObject
 
-## Allocate memory
-proc NSWindow_alloc(): NSWindow {.importobjc:"NSWindow alloc", header:"<AppKit/AppKit.h>".}
-proc alloc*(_: typedesc[NSWindow]): NSWindow = NSWindow_alloc()
+    # Methods
+    importClassMethods(NSWindow):
 
-## Initializes an allocated window with the specified values.
-proc initWithContentRect*(
-    this: NSWindow, 
-    contentRect: NSRect, 
-    styleMask: NSWindowStyleMask = NSWindowStyleMaskTitled or NSWindowStyleMaskClosable or NSWindowStyleMaskMiniaturizable or NSWindowStyleMaskResizable, 
-    backing: NSBackingStoreType = NSBackingStoreBuffered, 
-    `defer`: bool = false, 
-    screen: NSScreen = NSScreen(nil)
-): NSWindow {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## Initializes an allocated window with the specified values.
+        proc initWithContentRect*(
+            contentRect: NSRect, 
+            styleMask: NSWindowStyleMask = NSWindowStyleMaskTitled or NSWindowStyleMaskClosable or NSWindowStyleMaskMiniaturizable or NSWindowStyleMaskResizable, 
+            backing: NSBackingStoreType = NSBackingStoreBuffered, 
+            `defer`: bool = false, 
+            screen: NSScreen = NSScreen(nil)
+        ): NSWindow
 
-## Moves the window to the front of the screen list, within its level, and makes it the key window; that is, it shows the window.
-proc makeKeyAndOrderFront*(this: NSWindow, sender: Id = nil) {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## Moves the window to the front of the screen list, within its level, and makes it the key window; that is, it shows the window.
+        proc makeKeyAndOrderFront*(sender: Id = nil)
 
-## Makes the window the main window.
-proc makeMainWindow*(this: NSWindow) {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## Makes the window the main window.
+        proc makeMainWindow*()
 
-## The window’s content view, the highest accessible view object in the window’s view hierarchy.
-proc contentView*(this: NSWindow): NSView {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## The window’s content view, the highest accessible view object in the window’s view hierarchy.
+        proc contentView*(): NSView
 
-## The window’s content view, the highest accessible view object in the window’s view hierarchy.
-proc `contentView=`*(this: NSWindow, item: NSView) {.importobjc:"setContentView", header:"<AppKit/AppKit.h>".}
+        ## The window’s content view, the highest accessible view object in the window’s view hierarchy.
+        proc `contentView=`*(item: NSView)
 
-## The string that appears in the title bar of the window or the path to the represented file.
-proc title*(this: NSWindow): NSString {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## The string that appears in the title bar of the window or the path to the represented file.
+        proc title*(): NSString
 
-## The string that appears in the title bar of the window or the path to the represented file.
-proc `title=`*(this: NSWindow, title: NSString) {.importobjc:"setTitle", header:"<AppKit/AppKit.h>".}
+        ## The string that appears in the title bar of the window or the path to the represented file.
+        proc `title=`*(title: NSString)
 
-## Removes the window from the screen.
-proc close*(this: NSWindow) {.importobjc, header:"<AppKit/AppKit.h>".}
+        ## Removes the window from the screen.
+        proc close*()
 
-## A notification that the window object is about to close.
-let NSWindowWillCloseNotification* {.importc, header:"<AppKit/AppKit.h>".} : NSString
+    ## A notification that the window object is about to close.
+    let NSWindowWillCloseNotification* {.importc, header:"<AppKit/AppKit.h>".} : NSString
