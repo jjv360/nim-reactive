@@ -34,7 +34,7 @@ ComponentName(propName1: propValue1, propName2: propValue2, ... etc):
 To create a custom component, subclass the `Component` class.
 
 ```nim
-import nimreactive
+import reactive
 
 ## My custom component
 class MyComponent of Component:

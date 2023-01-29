@@ -40,7 +40,7 @@ proc reactiveStart*(code: proc()) =
             if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:
                 break
         
-    except CatchableError as err:
+    except Exception as err:
 
         # Show alert
         echo err.msg

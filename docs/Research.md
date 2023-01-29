@@ -10,6 +10,8 @@ This document holds some links to useful references online.
 ## Windows
 
 - [WebView2](https://learn.microsoft.com/en-us/microsoft-edge/webview2/)
+- [WebView2LoaderStatic.lib issues](https://github.com/MicrosoftEdge/WebView2Feedback/issues/2462)
+- [MemoryModule](https://forum.nim-lang.org/t/6554) - Load a DLL directly from memory
 
 
 ## Mac OS X

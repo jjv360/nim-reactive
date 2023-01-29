@@ -1,9 +1,12 @@
 import std/tables
 import classes
 import winim/lean
-import ./dialogs
 import ../shared/basecomponent
 import ../shared/mounts
+import ../shared/webview_bridge
+import ../shared/htmloutput
+import ../shared/htmlcomponents
+import ./native/webview2
 
 ## List of all active windows
 var activeHWNDs: Table[HWND, RootRef]
@@ -35,7 +38,7 @@ proc registerWindowClass*(): string =
 
 ##
 ## This class represents an onscreen window.
-class Window of Component:
+class Window of WebViewBridge:
 
     ## Backend window info
     var hwnd: HWND = 0
@@ -63,8 +66,8 @@ class Window of Component:
         # Store it
         activeHWNDs[this.hwnd] = this
 
-        # Create webview window
-
+        # Prepare WebView2 environment
+        # CreateCoreWebView2EnvironmentWithOptions
 
         # Create graphics memory for the window
         # let screenDC = GetDC(0)
@@ -152,6 +155,13 @@ class Window of Component:
     ## String description of this component
     method `$`(): string =
         return super.`$`() & " $hwnd=" & $this.hwnd
+
+
+    ## Called to inject JS into the page
+    method injectJS(js: string) =
+
+        # Do it
+        discard
 
 
 
