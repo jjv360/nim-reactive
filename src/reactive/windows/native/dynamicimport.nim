@@ -138,7 +138,7 @@ macro dynamicImportFromData*(libName: static[string], libData: static[string], c
                 return handle
 
             # Save the DLL to a temporary file
-            let libTempPath = genTempPath("NimReactive", "_" & cpu & "_" & `libName`)
+            let libTempPath = genTempPath("NimReactive", "_" & hostCPU & "_" & `libName`)
             writeFile(libTempPath, `libData`)
 
             # Delete the DLL on exit

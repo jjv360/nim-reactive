@@ -1,5 +1,6 @@
 import std/tables
 import std/browsers
+import std/asyncdispatch
 import classes
 import winim/lean
 import ../shared/basecomponent
@@ -44,6 +45,9 @@ class Window of WebViewBridge:
 
     ## Backend window info
     var hwnd: HWND = 0
+
+    ## WebView2 instance
+    var webview: WebView2 = nil
 
     ## Called when this component is mounted
     method onNativeMount() =
@@ -95,7 +99,8 @@ class Window of WebViewBridge:
         activeHWNDs[this.hwnd] = this
 
         # Prepare WebView2 environment
-        # CreateCoreWebView2EnvironmentWithOptions
+        this.webview = WebView2.init()
+        asyncCheck this.webview.attachTo(this.hwnd)
 
         # Create graphics memory for the window
         # let screenDC = GetDC(0)

@@ -127,7 +127,7 @@ class App of Component:
     method render(): Component = components:
 
         # App Window
-        Window(x: 50, y: 50, width: 200, height: 200, title: "Notepad"):
+        Window(x: 50, y: 50, width: 800, height: 600, title: "Notepad"):
 
             # Background
             Div(backgroundColor: "#f5efc9", position: "absolute", top: 0, left: 0, width: "100%", height: "100%")
