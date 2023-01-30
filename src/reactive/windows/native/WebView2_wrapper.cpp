@@ -5,7 +5,7 @@
 // #include <cstdio>
 // #include <iostream>
 #include <wrl.h>
-// #include "inc/wil/com.h"
+#include "inc/wil/com.h"
 #include "WebView2.h"
 
 // Nim closure type
@@ -34,7 +34,7 @@ void callNimClosure(NimClosure* closure, long errorCode, void* output) {
 extern "C" void WebView2CreateCallbackConverter(NimClosure* closure) {
 
     // Create it
-    Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
+    Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
         [closure](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
 
             // Send env pointer to Nim
