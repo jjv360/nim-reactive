@@ -54,3 +54,18 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* cal
 			}).Get());
 
 }
+
+// Asynchronously create a new WebView.
+extern "C" __declspec(dllexport) void WebView2_CreateController(HWND parentWindow, ICoreWebView2Environment* env, NimClosure* callback) {
+
+	// Do it
+	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+
+			// Call callback
+			callNimClosure(callback, (long)result, (void*)controller);
+			return S_OK;
+
+		}).Get());
+
+}
