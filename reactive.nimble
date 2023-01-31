@@ -14,7 +14,14 @@ requires "winim >= 3.9.0"
 # requires "webview >= 0.1.0"
 # requires "mummy >= 0.2.7"
 
-# Test script
+## Test script
 task test, "Test script":
     exec "nimble install -y"
     exec "nim r examples/notepad.nim"
+
+
+## Copy WebView2 DLLs from the Visual Studio project
+task copyWebView2, "Copy WebView2Wrapper.dll":
+    cpFile("extras/WebView2Wrapper/Release/WebView2Wrapper.dll", "src/reactive/windows/native/WebView2Wrapper_i386.dll")
+    cpFile("extras/WebView2Wrapper/x64/Release/WebView2Wrapper.dll", "src/reactive/windows/native/WebView2Wrapper_amd64.dll")
+    cpFile("extras/WebView2Wrapper/arm64/Release/WebView2Wrapper.dll", "src/reactive/windows/native/WebView2Wrapper_arm64.dll")

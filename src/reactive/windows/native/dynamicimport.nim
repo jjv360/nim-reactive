@@ -145,7 +145,17 @@ macro dynamicImportFromData*(libName: static[string], libData: static[string], c
             # TODO: Why would an exit proc not be GC-safe? The app is exiting, all memory will get removed anyway...
             {.gcsafe.}:
                 addExitProc(proc() =
-                    removeFile(libTempPath)
+
+                    # Unload the DLL so the file is deletable
+                    if handle != nil:
+                        handle.unloadLib()
+
+                    # Delete it
+                    try:
+                        removeFile(libTempPath)
+                    except OSError:
+                        echo "Unable to delete temporary file: " & libTempPath
+
                 )
 
             # Load it

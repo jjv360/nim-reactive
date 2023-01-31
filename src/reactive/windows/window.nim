@@ -2,7 +2,7 @@ import std/tables
 import std/browsers
 import std/asyncdispatch
 import classes
-import winim/lean
+import winim/[lean, com]
 import ../shared/basecomponent
 import ../shared/mounts
 import ../shared/webview_bridge
@@ -47,13 +47,14 @@ class Window of WebViewBridge:
     var hwnd: HWND = 0
 
     ## WebView2 instance
-    var webview: WebView2 = nil
+    var webview2environment: com = nil
 
     ## Called when this component is mounted
     method onNativeMount() =
 
         # Check if WebView2 is available
-        if not WebView2.isInstalled():
+        let installedVersion = $WebView2_GetInstalledVersion()
+        if installedVersion == "":
 
             # Prompt the user to ask to install it
             # TODO: Automatically download and install it, showing the user the progress...
@@ -69,14 +70,6 @@ class Window of WebViewBridge:
             # Quit the app
             echo "[NimReactive] Exiting since WebView2 is missing."
             quit(3)
-
-        # Initialize WebView2
-        echo "WebView v " & WebView2.versionInfo()
-        # CreateCoreWebView2EnvironmentWithOptions(environmentCreatedHandler = 
-        #     proc(resultOut: HRESULT, env: pointer): HRESULT =
-        #         echo "HERE " & $resultOut
-        #         return S_OK
-        # )
 
         # Create the native window
         this.hwnd = CreateWindowEx(
@@ -99,8 +92,20 @@ class Window of WebViewBridge:
         activeHWNDs[this.hwnd] = this
 
         # Prepare WebView2 environment
-        this.webview = WebView2.init()
-        asyncCheck this.webview.attachTo(this.hwnd)
+        echo "[NimReactive] Using system WebView2 version " & installedVersion
+        WebView2_CreateEnvironment(proc(resultOut: HRESULT, env: ICoreWebView2Environment) =
+
+            # Check if failed
+            if resultOut != S_OK:
+
+                # Failed!
+                raise newException(OSError, "Unable to load WebView2. " & $resultOut)
+
+            # Loaded successfully, do the rest
+            this.webview2environment = wrap(env)
+            this.onWebView2Environment()
+
+        )
 
         # Create graphics memory for the window
         # let screenDC = GetDC(0)
@@ -130,6 +135,12 @@ class Window of WebViewBridge:
 
         # Draw background color
         # this.p_updateLayeredWindow(hwnd)
+
+
+    ## Called shortly after onNativeMount(), once we have the WebView2 environment
+    method onWebView2Environment() = 
+
+        echo "HERERERE"
 
 
     ## Called on unmount
