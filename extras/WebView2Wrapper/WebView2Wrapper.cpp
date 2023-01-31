@@ -9,6 +9,7 @@
 #include <wrl.h>
 #include <wil/com.h>
 #include <atlstr.h>
+#include <vector> 
 #include "WebView2.h"
 
 using namespace Microsoft::WRL;
@@ -36,11 +37,16 @@ extern "C" __declspec(dllexport) const char* WebView2_GetInstalledVersion() {
 	CoTaskMemFree(versionInfo);
 
 	// Copy so memory is not released ... host app should free it when done
+	if (strlen(str) <= 0) return "";
 	char* copy = (char*) malloc(strlen(str) + 1);
+	if (!copy) return "";
 	strcpy_s(copy, strlen(str) + 1, str);
 	return copy;
 
 }
+
+// List of created environments
+static std::vector<ICoreWebView2Environment*> createdEnvironments;
 
 // Create environent and return a COM object for it
 extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* callback) {
@@ -49,6 +55,9 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* cal
 	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
 		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
 			[&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+
+				// Store it so it doesn't get GC'd
+				createdEnvironments.push_back(env);
 
 				// Call callback
 				callNimClosure(callback, (long)result, (void*)env);
@@ -88,7 +97,7 @@ extern "C" __declspec(dllexport) void WebView2_SetBounds(ICoreWebView2Controller
 std::wstring UTF8_to_wchar(const char* in)
 {
 	std::wstring out;
-	unsigned int codepoint;
+	unsigned int codepoint = 0;
 	while (*in != 0)
 	{
 		unsigned char ch = static_cast<unsigned char>(*in);
