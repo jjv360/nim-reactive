@@ -13,10 +13,14 @@ dynamicImportFromData(dllName, dllData):
     alert "Loading: " & dllName
 
 
+
     ########## Generic
 
     ## Convert a COM error code to a string
     proc WebView2_GetErrorString*(code: HRESULT): cstring {.stdcall.}
+
+
+
 
 
     ########## Environment
@@ -32,6 +36,8 @@ dynamicImportFromData(dllName, dllData):
         userData: pointer,
         environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Environment, userData: pointer) {.stdcall.}
     ) {.stdcall.}
+
+
 
 
 

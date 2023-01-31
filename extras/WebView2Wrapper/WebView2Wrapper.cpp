@@ -12,7 +12,7 @@
 #include <vector> 
 #include <comdef.h>
 #include <iostream>
-#include <format>
+//#include <format>
 #include "WebView2.h"
 
 using namespace Microsoft::WRL;
@@ -69,11 +69,11 @@ typedef void(WebView2_CreateEnvironment_Callback)(HRESULT result, ICoreWebView2E
 extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* userData, WebView2_CreateEnvironment_Callback * callback) {
 
 	// Initialize COM
-	//auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	//if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
-	//	callback(result, nullptr, userData);
-	//	return;
-	//}
+	auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
+		callback(result, nullptr, userData);
+		return;
+	}
 
 	// Create it
 	CreateCoreWebView2Environment(
@@ -88,6 +88,30 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* userData,
 
 }
 
+//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
+//
+//  PURPOSE:  Processes messages for the main window.
+//
+//  WM_DESTROY  - post a quit message and return
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	TCHAR greeting[] = _T("Hello, Windows desktop!");
+
+	switch (message)
+	{
+	case WM_SIZE:
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+		break;
+	}
+
+	return 0;
+}
+
 // Asynchronously create a new WebView.
 typedef void(WebView2_CreateController_Callback)(HRESULT result, ICoreWebView2Controller* env, void* userData);
 extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, void* userData, HWND parentWindow, WebView2_CreateController_Callback * callback) {
@@ -97,7 +121,19 @@ extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Env
 	//snprintf(buff, sizeof(buff), "HWND %lli", parentWindow);
 	//MessageBoxA(0, buff, "Hello", 0);
 
-	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+	HWND hWnd = CreateWindow(
+		L"NimReactiveWindowClass",
+		L"Hello",
+		WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		1200, 900,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	);
+
+	env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 
 			// Call callback

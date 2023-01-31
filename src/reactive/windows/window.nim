@@ -27,12 +27,13 @@ proc registerWindowClass*(): string =
         return WindowClassName
 
     # Do it
-    var wc: WNDCLASS
+    var wc: WNDCLASSEX
+    wc.cbSize = sizeof(WNDCLASSEX).UINT
     wc.lpfnWndProc = wndProcProxy
     wc.hInstance = 0
     wc.lpszClassName = WindowClassName
     wc.style = CS_HREDRAW or CS_VREDRAW
-    RegisterClass(wc)
+    RegisterClassEx(wc)
 
     # Done
     hasDone = true
@@ -85,7 +86,7 @@ class Window of WebViewBridge:
 
             0,                                  # Parent window    
             0,                                  # Menu
-            GetModuleHandle(nil),               # Instance handle
+            nil,                                # Instance handle
             nil                                 # Additional application data, unused since we're keeping references in `activeHWNDs`
         )
 
