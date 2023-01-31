@@ -30,7 +30,7 @@ dynamicImportFromData(dllName, dllData):
     ## Creates an evergreen WebView2 Environment using the installed WebView2 Runtime version.
     proc WebView2_CreateEnvironment*(
         userData: pointer,
-        environmentCreatedHandler: proc(userData: pointer, errorCode: HRESULT, env: ICoreWebView2Environment) {.stdcall.}
+        environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Environment, userData: pointer) {.stdcall.}
     ) {.stdcall.}
 
 
@@ -44,8 +44,8 @@ dynamicImportFromData(dllName, dllData):
     proc createController*(
         this: ICoreWebView2Environment, 
         userData: pointer,
-        parentWindow: HWND, 
-        environmentCreatedHandler: proc(userData: pointer, errorCode: HRESULT, env: ICoreWebView2Controller) {.stdcall.}
+        parentHWND: HWND, 
+        environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Controller, userData: pointer) {.stdcall.}
     ) {.stdcall, importc:"WebView2_CreateController".}
 
     ## Set bounds

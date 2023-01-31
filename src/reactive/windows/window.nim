@@ -93,12 +93,12 @@ class Window of WebViewBridge:
         activeHWNDs[this.hwnd] = this
 
         # Show window
-        ShowWindow(this.hwnd, SW_NORMAL)
+        ShowWindow(this.hwnd, SW_SHOWDEFAULT)
         UpdateWindow(this.hwnd)
 
         # Prepare WebView2 environment
         echo "[NimReactive] Using WebView2 " & installedVersion & " (evergreen)"
-        WebView2_CreateEnvironment(this.unsafeAddr, proc(userData: pointer, result: HRESULT, env: ICoreWebView2Environment) {.stdcall.} =
+        WebView2_CreateEnvironment(this.unsafeAddr, proc(result: HRESULT, env: ICoreWebView2Environment, userData: pointer) {.stdcall.} =
 
             # Check if failed
             let this = cast[Window](userData)
@@ -110,7 +110,8 @@ class Window of WebViewBridge:
             this.wv2env = env
 
             # Create the WebView component
-            this.wv2env.createController(this.unsafeAddr, this.hwnd, proc(userData: pointer, result: HRESULT, controller: ICoreWebView2Controller) {.stdcall.} =
+            alert "hwnd " & $this.hwnd
+            this.wv2env.createController(this.unsafeAddr, this.hwnd, proc(result: HRESULT, controller: ICoreWebView2Controller, userData: pointer) {.stdcall.} =
 
                 # Check if failed
                 let this = cast[Window](userData)

@@ -11,6 +11,8 @@
 #include <atlstr.h>
 #include <vector> 
 #include <comdef.h>
+#include <iostream>
+#include <format>
 #include "WebView2.h"
 
 using namespace Microsoft::WRL;
@@ -59,19 +61,22 @@ extern "C" __declspec(dllexport) const char* WebView2_GetInstalledVersion() {
 
 }
 
+// Created environments held in memory
+//std::vector
+
 // Create environent and return a COM object for it
 typedef void(WebView2_CreateEnvironment_Callback)(HRESULT result, ICoreWebView2Environment* env, void* userData);
 extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* userData, WebView2_CreateEnvironment_Callback * callback) {
 
-	// Initialize ActiveX
-	auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
-		callback(result, nullptr, userData);
-		return;
-	}
+	// Initialize COM
+	//auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	//if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
+	//	callback(result, nullptr, userData);
+	//	return;
+	//}
 
 	// Create it
-	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
+	CreateCoreWebView2Environment(
 		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
 			[&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
 
@@ -88,6 +93,10 @@ typedef void(WebView2_CreateController_Callback)(HRESULT result, ICoreWebView2Co
 extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, void* userData, HWND parentWindow, WebView2_CreateController_Callback * callback) {
 
 	// Do it
+	//char buff[100];
+	//snprintf(buff, sizeof(buff), "HWND %lli", parentWindow);
+	//MessageBoxA(0, buff, "Hello", 0);
+
 	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 
