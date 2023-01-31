@@ -1,5 +1,6 @@
 //
 // This is a simple wrapper around WebView2 which allows usage from Nim.
+// All strings are UTF8-encoded
 
 #include <windows.h>
 #include <stdlib.h>
