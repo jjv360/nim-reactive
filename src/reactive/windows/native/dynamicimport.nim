@@ -22,12 +22,20 @@ proc replaceProcsIn(statements: NimNode, loaderFunctionIdent: NimNode) =
             # A proc without a body, this is what we're looking for...
             let procDef = statement
             let procName = procDef.name
-            let procNameStr = $procName
+            var procNameStr = $procName
 
             # Create the proc type definition
             let typeDef = newNimNode(nnkProcTy)
             typeDef.add(procDef.params)
             typeDef.add(procDef.pragma)
+
+            # Remove importc:"" pragma if it exists, use it to replace the function name
+            if typeDef.pragma.kind != nnkEmpty:
+                for idx, pragma in typeDef.pragma:
+                    if pragma.kind == nnkExprColonExpr and $pragma[0] == "importc":
+                        procNameStr = $pragma[1]
+                        typeDef.pragma.del(idx)
+                        break
 
             # Set wrapper code for the function
             procDef.body = quote do:

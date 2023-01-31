@@ -2,7 +2,7 @@ import std/tables
 import std/browsers
 import std/asyncdispatch
 import classes
-import winim/[lean, com]
+import winim/lean
 import ../shared/basecomponent
 import ../shared/mounts
 import ../shared/webview_bridge
@@ -47,7 +47,8 @@ class Window of WebViewBridge:
     var hwnd: HWND = 0
 
     ## WebView2 instance
-    var webview2environment: com = nil
+    var wv2env: ICoreWebView2Environment = nil
+    var wv2controller: ICoreWebView2Controller = nil
 
     ## Called when this component is mounted
     method onNativeMount() =
@@ -92,18 +93,32 @@ class Window of WebViewBridge:
         activeHWNDs[this.hwnd] = this
 
         # Prepare WebView2 environment
-        echo "[NimReactive] Using system WebView2 version " & installedVersion
-        WebView2_CreateEnvironment(proc(resultOut: HRESULT, env: ICoreWebView2Environment) =
+        echo "[NimReactive] Using WebView2 " & installedVersion & " (evergreen)"
+        WebView2_CreateEnvironment(proc(result: HRESULT, env: ICoreWebView2Environment) =
 
             # Check if failed
-            if resultOut != S_OK:
-
-                # Failed!
-                raise newException(OSError, "Unable to load WebView2. " & $resultOut)
+            if result != S_OK:
+                raise newException(OSError, "Unable to create WebView2 environment. " & $result)
 
             # Loaded successfully, do the rest
-            this.webview2environment = wrap(env)
-            this.onWebView2Environment()
+            alert "Created Env"
+            this.wv2env = env
+
+            # Create the WebView component
+            this.wv2env.createController(this.hwnd, proc(result: HRESULT, controller: ICoreWebView2Controller) =
+
+                # Check if failed
+                if result != S_OK:
+                    raise newException(OSError, "Unable to create WebView2 controller. " & $result)
+
+                # Done
+                alert "Created controller"
+                this.wv2controller = controller
+                this.wv2controller.setBounds(0, 0, this.props{"width"}, this.props{"height"})
+                this.wv2controller.navigate("https://google.com")
+                echo "DONE"
+
+            )
 
         )
 
@@ -135,12 +150,6 @@ class Window of WebViewBridge:
 
         # Draw background color
         # this.p_updateLayeredWindow(hwnd)
-
-
-    ## Called shortly after onNativeMount(), once we have the WebView2 environment
-    method onWebView2Environment() = 
-
-        echo "HERERERE"
 
 
     ## Called on unmount
