@@ -46,10 +46,10 @@ extern "C" __declspec(dllexport) const char* WebView2_GetInstalledVersion() {
 }
 
 // List of created environments
-static std::vector<ICoreWebView2Environment*> createdEnvironments;
+//static std::vector<ICoreWebView2Environment*> createdEnvironments;
 
 // Create environent and return a COM object for it
-extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* callback) {
+/*extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure * callback) {
 
 	// Create it
 	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
@@ -65,22 +65,34 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* cal
 
 			}).Get());
 
-}
+}*/
 
 // Asynchronously create a new WebView.
-extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, HWND parentWindow, NimClosure* callback) {
+extern "C" __declspec(dllexport) void WebView2_CreateController(HWND parentWindow, NimClosure* callback) {
 
-	// Do it
-	printf("HERE1");
-	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+	// Create environment
+	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
+		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
+			[&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
 
-			// Call callback
-			printf("HERE2");
-			callNimClosure(callback, (long)result, (void*)controller);
-			return S_OK;
+				// Fail if not ok
+				if (result != S_OK) {
+					callNimClosure(callback, (long)result, nullptr);
+					return S_OK;
+				}
 
-		}).Get());
+				// Create controller
+				env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+					[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+
+						// Call callback
+						callNimClosure(callback, (long)result, (void*)controller);
+						return S_OK;
+
+					}).Get());
+
+				return S_OK;
+			}).Get());
 
 }
 
