@@ -9,7 +9,6 @@ import std/macros
 # Export things that users of our macro need
 export tempfiles, exitprocs, os, dynlib
 
-
 ## Replace defined procs with their dynamic loader versions
 proc replaceProcsIn(statements: NimNode, loaderFunctionIdent: NimNode) =
 
@@ -146,7 +145,8 @@ macro dynamicImportFromData*(libName: static[string], libData: static[string], c
                 return handle
 
             # Save the DLL to a temporary file
-            let libTempPath = genTempPath("NimReactive", "_" & hostCPU & "_" & `libName`)
+            const cpu = hostCPU
+            let libTempPath = genTempPath("NimReactive", "_" & cpu & "_" & `libName`)
             writeFile(libTempPath, `libData`)
 
             # Delete the DLL on exit
@@ -157,11 +157,16 @@ macro dynamicImportFromData*(libName: static[string], libData: static[string], c
                     # Unload the DLL so the file is deletable
                     if handle != nil:
                         handle.unloadLib()
+                        
 
                     # Delete it
-                    try:
-                        removeFile(libTempPath)
-                    except OSError:
+                    var didDelete = false
+                    for i in 0 ..< 5:
+                        if tryRemoveFile(libTempPath): 
+                            didDelete = true
+                            break
+                        sleep(100)   # <-- Need to wait a bit for some reason, or else we can't delete it
+                    if not didDelete:
                         echo "Unable to delete temporary file: " & libTempPath
 
                 )

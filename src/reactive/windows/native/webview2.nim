@@ -3,12 +3,20 @@
 import std/os
 import winim/lean
 import ./dynamicimport
+import ../dialogs
 
 
 # Embed + import WebView2Wrapper.dll
 const dllName = "WebView2Wrapper_" & hostCPU & ".dll"
 const dllData = staticRead(dllName)
 dynamicImportFromData(dllName, dllData):
+    alert "Loading: " & dllName
+
+
+    ########## Generic
+
+    ## Convert a COM error code to a string
+    proc WebView2_GetErrorString*(code: HRESULT): cstring {.stdcall.}
 
 
     ########## Environment
@@ -19,12 +27,10 @@ dynamicImportFromData(dllName, dllData):
     ## Represents the WebView2 Environment.
     type ICoreWebView2Environment* = distinct pointer
 
-    ## Environment create callback
-    type WebView2_CreateEnvironment_Callback* = proc(errorCode: HRESULT, env: ICoreWebView2Environment) {.closure.}
-
     ## Creates an evergreen WebView2 Environment using the installed WebView2 Runtime version.
     proc WebView2_CreateEnvironment*(
-        environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Environment) {.closure.}
+        userData: pointer,
+        environmentCreatedHandler: proc(userData: pointer, errorCode: HRESULT, env: ICoreWebView2Environment) {.stdcall.}
     ) {.stdcall.}
 
 
@@ -37,8 +43,9 @@ dynamicImportFromData(dllName, dllData):
     ## Asynchronously create a new WebView.
     proc createController*(
         this: ICoreWebView2Environment, 
+        userData: pointer,
         parentWindow: HWND, 
-        environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Controller) {.closure.}
+        environmentCreatedHandler: proc(userData: pointer, errorCode: HRESULT, env: ICoreWebView2Controller) {.stdcall.}
     ) {.stdcall, importc:"WebView2_CreateController".}
 
     ## Set bounds

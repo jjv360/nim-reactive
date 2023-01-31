@@ -73,11 +73,11 @@ class Window of WebViewBridge:
             quit(3)
 
         # Create the native window
-        this.hwnd = CreateWindowEx(
-            0,#WS_EX_LAYERED,                   # Extra window styles
+        this.hwnd = CreateWindow(
+            #0,#WS_EX_LAYERED,                   # Extra window styles
             registerWindowClass(),              # Class name
             this.props{"title"}.cstring,        # Window title
-            WS_OVERLAPPEDWINDOW or WS_VISIBLE,  # Window style
+            WS_OVERLAPPEDWINDOW,                # Window style
 
             # Size and position, x, y, width, height
             this.props{"x"}, this.props{"y"}, 
@@ -85,31 +85,37 @@ class Window of WebViewBridge:
 
             0,                                  # Parent window    
             0,                                  # Menu
-            0,                                  # Instance handle
+            GetModuleHandle(nil),               # Instance handle
             nil                                 # Additional application data, unused since we're keeping references in `activeHWNDs`
         )
 
         # Store it
         activeHWNDs[this.hwnd] = this
 
+        # Show window
+        ShowWindow(this.hwnd, SW_NORMAL)
+        UpdateWindow(this.hwnd)
+
         # Prepare WebView2 environment
         echo "[NimReactive] Using WebView2 " & installedVersion & " (evergreen)"
-        WebView2_CreateEnvironment(proc(result: HRESULT, env: ICoreWebView2Environment) =
+        WebView2_CreateEnvironment(this.unsafeAddr, proc(userData: pointer, result: HRESULT, env: ICoreWebView2Environment) {.stdcall.} =
 
             # Check if failed
+            let this = cast[Window](userData)
             if result != S_OK:
-                raise newException(OSError, "Unable to create WebView2 environment. " & $result)
+                raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
 
             # Loaded successfully, do the rest
             alert "Created Env"
             this.wv2env = env
 
             # Create the WebView component
-            this.wv2env.createController(this.hwnd, proc(result: HRESULT, controller: ICoreWebView2Controller) =
+            this.wv2env.createController(this.unsafeAddr, this.hwnd, proc(userData: pointer, result: HRESULT, controller: ICoreWebView2Controller) {.stdcall.} =
 
                 # Check if failed
+                let this = cast[Window](userData)
                 if result != S_OK:
-                    raise newException(OSError, "Unable to create WebView2 controller. " & $result)
+                    raise newException(OSError, "Unable to create WebView2 controller. " & $WebView2_GetErrorString(result))
 
                 # Done
                 alert "Created controller"

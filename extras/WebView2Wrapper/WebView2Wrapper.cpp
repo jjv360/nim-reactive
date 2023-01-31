@@ -10,19 +10,33 @@
 #include <wil/com.h>
 #include <atlstr.h>
 #include <vector> 
+#include <comdef.h>
 #include "WebView2.h"
 
 using namespace Microsoft::WRL;
 
-// Nim closure type
-typedef struct {
-	void* nimProc;
-	void* nimEnv;
-} NimClosure;
+// Convert a COM error code to a string
+extern "C" __declspec(dllexport) const char* WebView2_GetErrorString(HRESULT hr) {
 
-// Call nim closure
-void callNimClosure(NimClosure* closure, long errorCode, void* output) {
-	((void(*)(long errorCode, void* output, void* env)) closure->nimProc) (errorCode, output, closure->nimEnv);
+	// Check for known error codes
+	switch (hr) {
+		case HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND): return "Couldn't find Edge WebView2 Runtime. Do you have a version installed?";
+		case HRESULT_FROM_WIN32(ERROR_FILE_EXISTS): return "User data folder cannot be created because a file with the same name already exists.";
+		case E_ACCESSDENIED: return "Unable to create user data folder, Access Denied.";
+		case E_FAIL: return "Edge runtime unable to start";
+	}
+
+	// Get error string
+	_com_error err(hr);
+	const char* str = CW2A(err.ErrorMessage());
+
+	// Copy so memory is not released ... host app should free it when done
+	if (strlen(str) <= 0) return "";
+	char* copy = (char*)malloc(strlen(str) + 1);
+	if (!copy) return "";
+	strcpy_s(copy, strlen(str) + 1, str);
+	return copy;
+
 }
 
 // Get version of the installed WebView2 as a string. Host app should free the string when done.
@@ -46,7 +60,15 @@ extern "C" __declspec(dllexport) const char* WebView2_GetInstalledVersion() {
 }
 
 // Create environent and return a COM object for it
-extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* callback) {
+typedef void(WebView2_CreateEnvironment_Callback)(HRESULT result, ICoreWebView2Environment* env, void* userData);
+extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* userData, WebView2_CreateEnvironment_Callback * callback) {
+
+	// Initialize ActiveX
+	auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
+		callback(result, nullptr, userData);
+		return;
+	}
 
 	// Create it
 	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
@@ -54,7 +76,7 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* cal
 			[&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
 
 				// Call callback
-				callNimClosure(callback, (long)result, (void*)env);
+				callback(result, env, userData);
 				return S_OK;
 
 			}).Get());
@@ -62,14 +84,15 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* cal
 }
 
 // Asynchronously create a new WebView.
-extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, HWND parentWindow, NimClosure* callback) {
+typedef void(WebView2_CreateController_Callback)(HRESULT result, ICoreWebView2Controller* env, void* userData);
+extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, void* userData, HWND parentWindow, WebView2_CreateController_Callback * callback) {
 
 	// Do it
 	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 
 			// Call callback
-			callNimClosure(callback, (long)result, (void*)controller);
+			callback(result, controller, userData);
 			return S_OK;
 
 		}).Get());
