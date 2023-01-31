@@ -71,10 +71,12 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(NimClosure* cal
 extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, HWND parentWindow, NimClosure* callback) {
 
 	// Do it
+	printf("HERE1");
 	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 
 			// Call callback
+			printf("HERE2");
 			callNimClosure(callback, (long)result, (void*)controller);
 			return S_OK;
 
