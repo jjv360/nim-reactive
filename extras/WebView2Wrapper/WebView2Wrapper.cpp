@@ -133,6 +133,9 @@ extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Env
 		NULL
 	);
 
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
+	UpdateWindow(hWnd);
+
 	env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 
