@@ -13,24 +13,25 @@ proc reactiveStart*(code: proc()) =
         SetProcessDPIAware()
 
         # Initialize ActiveX
-        CoInitializeEx(nil, COINIT_APARTMENTTHREADED)
+        #CoInitializeEx(nil, COINIT_APARTMENTTHREADED)
 
         # Run their code
         code()
 
-        # Create Win32 timer so our event loop is running at a minimum of 1ms, this is necessary to allow
+        # Create Win32 timer so our event loop is running at a minimum of 2ms, this is necessary to allow
         # asyncdispatch to run alongside the Win32 event loop in the same thread
-        SetTimer(0, 0, 1, nil)
+        SetTimer(0, 0, 2, nil)
 
         # Run the Windows event loop
         var msg: MSG
         while GetMessage(msg, 0, 0, 0) != 0:
+            # if msg.message != 275: echo "MSG: " & $msg.message
             TranslateMessage(msg)
             DispatchMessage(msg)
 
             # Process asyncdispatch's event loop
             if asyncdispatch.hasPendingOperations():
-                asyncdispatch.drain(1)
+                asyncdispatch.drain(2)
 
             # Quit the app if there's no pending operations on asyncdispatch and there's no mounted components
             if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:

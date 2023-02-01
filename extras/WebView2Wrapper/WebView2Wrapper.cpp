@@ -107,6 +107,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_SIZE:
+		//if (webviewController != nullptr) {
+		//	RECT bounds;
+		//	GetClientRect(hWnd, &bounds);
+		//	webviewController->put_Bounds(bounds);
+		//};
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -119,23 +124,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-// Why???
-extern "C" __declspec(dllexport) HWND WebView2_CreateWindowEx(
-	DWORD     dwExStyle,
-	LPTSTR    lpClassName,
-	LPTSTR    lpWindowName,
-	DWORD     dwStyle,
-	int       X,
-	int       Y,
-	int       nWidth,
-	int       nHeight,
-	HWND      hWndParent,
-	HMENU     hMenu,
-	HINSTANCE hInstance,
-	LPVOID    lpParam
-) {
+HWND test() {
 
-	return CreateWindowEx(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+	WNDCLASSEX wcex;
+
+	wcex.cbSize = sizeof(WNDCLASSEX);
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = 0;
+	wcex.hIcon = 0;// LoadIcon(hInstance, IDI_APPLICATION);
+	wcex.hCursor = 0;// LoadCursor(NULL, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszMenuName = NULL;
+	wcex.lpszClassName = L"MMTEST";
+	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+
+	if (!RegisterClassEx(&wcex))
+	{
+		MessageBox(NULL,
+			_T("Call to RegisterClassEx failed!"),
+			_T("Windows Desktop Guided Tour"),
+			NULL);
+
+		return 0;
+	}
+
+	HWND hWnd = CreateWindow(
+		L"MMTEST",
+		L"Hello",
+		WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		1200, 900,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	);
+
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
+	UpdateWindow(hWnd);
+	return hWnd;
 
 }
 
@@ -148,33 +178,38 @@ extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Env
 	//snprintf(buff, sizeof(buff), "HWND %lli", parentWindow);
 	//MessageBoxA(0, buff, "Hello", 0);
 
-	/*HWND hWnd = CreateWindow(
-		L"NimReactiveWindowClass",
-		L"Hello",
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		1200, 900,
-		NULL,
-		NULL,
-		NULL,
-		NULL
-	);
+	
 
-	ShowWindow(hWnd, SW_SHOWDEFAULT);
-	UpdateWindow(hWnd);*/
-	MessageBoxA(0, "H1", "Hello", 0);
-	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+	//MessageBoxA(0, "H1", "Hello", 0);
+	HWND hWnd = test();
+	env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 
 			// Call callback
-			char buff[100];
-			snprintf(buff, sizeof(buff), "H2 cb=%lli context=%lli controller=%lli", cb, context, controller);
-			MessageBoxA(0, buff, "Hello", 0);
+			//char buff[100];
+			//snprintf(buff, sizeof(buff), "H2 cb=%lli context=%lli controller=%lli", cb, context, controller);
+			//MessageBoxA(0, buff, "Hello", 0);
 
-			cb(result, controller, context);
+			// Set default size
+			RECT bounds;
+			GetClientRect(hWnd, &bounds);
+			controller->put_Bounds(bounds);
+
+			static wil::com_ptr<ICoreWebView2> webview;
+			controller->get_CoreWebView2(&webview);
+			webview->Navigate(L"https://www.bing.com/");
+
+			//cb(result, controller, context);
 			return S_OK;
 
 		}).Get());
+
+	MSG msg;
+	while (GetMessage(&msg, NULL, 0, 0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
 
 }
 
@@ -184,7 +219,7 @@ extern "C" __declspec(dllexport) void WebView2_SetBounds(ICoreWebView2Controller
 	bounds.left = x;
 	bounds.top = y;
 	bounds.right = width - x;
-	bounds.bottom = height = y;
+	bounds.bottom = height - y;
 	controller->put_Bounds(bounds);
 }
 

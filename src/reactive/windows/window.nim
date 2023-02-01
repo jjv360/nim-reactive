@@ -30,7 +30,7 @@ proc registerWindowClass*(): string =
     var wc: WNDCLASSEX
     wc.cbSize = sizeof(WNDCLASSEX).UINT
     wc.lpfnWndProc = wndProcProxy
-    wc.hInstance = 0
+    wc.hInstance = GetModuleHandle(nil)
     wc.lpszClassName = WindowClassName
     wc.style = CS_HREDRAW or CS_VREDRAW
     RegisterClassEx(wc)
@@ -76,8 +76,8 @@ class Window of WebViewBridge:
             quit(3)
 
         # Create the native window
-        this.hwnd = CreateWindowEx(
-            0,#WS_EX_LAYERED,                   # Extra window styles
+        this.hwnd = CreateWindow(
+            #0,#WS_EX_LAYERED,                   # Extra window styles
             registerWindowClass(),              # Class name
             this.props{"title"}.cstring,        # Window title
             WS_OVERLAPPEDWINDOW,                # Window style
@@ -88,7 +88,7 @@ class Window of WebViewBridge:
 
             0,                                  # Parent window    
             0,                                  # Menu
-            nil,                                # Instance handle
+            GetModuleHandle(nil),               # Instance handle
             nil                                 # Additional application data, unused since we're keeping references in `activeHWNDs`
         )
 
@@ -112,12 +112,12 @@ class Window of WebViewBridge:
             this.wv2env = env
 
             # Create the WebView component
-            alert "here1"
+            echo "Creating the controller..."
             this.wv2env.createController(this.hwnd, cast[pointer](this), proc(result: HRESULT, controller: ICoreWebView2Controller, context: pointer) {.stdcall.} =
 
                 # Check if failed
                 echo "HERE2222"
-                alert "here2"
+                #alert "here2"
                 # let this = cast[Window](context)
                 # alert "here3"
                 # if result != S_OK:
@@ -203,6 +203,12 @@ class Window of WebViewBridge:
 
             # Found it, pass it on
             return component.controlWndProc(componentHwnd, uMsg, wParam, lParam)
+
+        elif uMsg == WM_SIZE:
+
+            # Window has been resized
+            echo "Resized"
+            return 0
 
         else:
 
