@@ -12,6 +12,9 @@ proc reactiveStart*(code: proc()) =
         # Set DPI awareness
         SetProcessDPIAware()
 
+        # Initialize ActiveX
+        CoInitializeEx(nil, COINIT_APARTMENTTHREADED)
+
         # Run their code
         code()
 

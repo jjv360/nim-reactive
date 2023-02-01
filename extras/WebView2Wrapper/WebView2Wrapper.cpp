@@ -64,16 +64,22 @@ extern "C" __declspec(dllexport) const char* WebView2_GetInstalledVersion() {
 // Created environments held in memory
 //std::vector
 
+// NimClosure
+typedef struct {
+	void* nimProc;
+	void* nimEnv;
+} NimClosure;
+
 // Create environent and return a COM object for it
-typedef void(WebView2_CreateEnvironment_Callback)(HRESULT result, ICoreWebView2Environment* env, void* userData);
-extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* userData, WebView2_CreateEnvironment_Callback * callback) {
+typedef void(WebVew2_CreateEnvironment_Callback)(HRESULT result, ICoreWebView2Environment* env, void* context);
+extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* context, WebVew2_CreateEnvironment_Callback* cb) {
 
 	// Initialize COM
-	auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
-		callback(result, nullptr, userData);
-		return;
-	}
+	//auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	//if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
+	//	callback(result, nullptr, userData);
+	//	return;
+	//}
 
 	// Create it
 	CreateCoreWebView2Environment(
@@ -81,7 +87,8 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* userData,
 			[&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
 
 				// Call callback
-				callback(result, env, userData);
+				//typedef void(FuncType)(HRESULT result, ICoreWebView2Environment* env, void* nimEnv);
+				cb(result, env, context);
 				return S_OK;
 
 			}).Get());
@@ -112,16 +119,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+// Why???
+extern "C" __declspec(dllexport) HWND WebView2_CreateWindowEx(
+	DWORD     dwExStyle,
+	LPTSTR    lpClassName,
+	LPTSTR    lpWindowName,
+	DWORD     dwStyle,
+	int       X,
+	int       Y,
+	int       nWidth,
+	int       nHeight,
+	HWND      hWndParent,
+	HMENU     hMenu,
+	HINSTANCE hInstance,
+	LPVOID    lpParam
+) {
+
+	return CreateWindowEx(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+
+}
+
 // Asynchronously create a new WebView.
-typedef void(WebView2_CreateController_Callback)(HRESULT result, ICoreWebView2Controller* env, void* userData);
-extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, void* userData, HWND parentWindow, WebView2_CreateController_Callback * callback) {
+typedef void(WebVew2_CreateController_Callback)(HRESULT result, ICoreWebView2Controller* controller, void* context);
+extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, HWND parentWindow, void* context, WebVew2_CreateController_Callback* cb) {
 
 	// Do it
 	//char buff[100];
 	//snprintf(buff, sizeof(buff), "HWND %lli", parentWindow);
 	//MessageBoxA(0, buff, "Hello", 0);
 
-	HWND hWnd = CreateWindow(
+	/*HWND hWnd = CreateWindow(
 		L"NimReactiveWindowClass",
 		L"Hello",
 		WS_OVERLAPPEDWINDOW,
@@ -134,13 +161,17 @@ extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Env
 	);
 
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
-	UpdateWindow(hWnd);
-
-	env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+	UpdateWindow(hWnd);*/
+	MessageBoxA(0, "H1", "Hello", 0);
+	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 
 			// Call callback
-			callback(result, controller, userData);
+			char buff[100];
+			snprintf(buff, sizeof(buff), "H2 cb=%lli context=%lli controller=%lli", cb, context, controller);
+			MessageBoxA(0, buff, "Hello", 0);
+
+			cb(result, controller, context);
 			return S_OK;
 
 		}).Get());

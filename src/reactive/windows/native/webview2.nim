@@ -10,7 +10,7 @@ import ../dialogs
 const dllName = "WebView2Wrapper_" & hostCPU & ".dll"
 const dllData = staticRead(dllName)
 dynamicImportFromData(dllName, dllData):
-    alert "Loading: " & dllName
+    #alert "Loading: " & dllName
 
 
 
@@ -19,7 +19,7 @@ dynamicImportFromData(dllName, dllData):
     ## Convert a COM error code to a string
     proc WebView2_GetErrorString*(code: HRESULT): cstring {.stdcall.}
 
-
+    proc WebView2_CreateWindowEx*(dwExStyle: DWORD, lpClassName: LPCWSTR, lpWindowName: LPCWSTR, dwStyle: DWORD, X: int32, Y: int32, nWidth: int32, nHeight: int32, hWndParent: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpParam: LPVOID): HWND {.stdcall.}
 
 
 
@@ -33,9 +33,24 @@ dynamicImportFromData(dllName, dllData):
 
     ## Creates an evergreen WebView2 Environment using the installed WebView2 Runtime version.
     proc WebView2_CreateEnvironment*(
-        userData: pointer,
-        environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Environment, userData: pointer) {.stdcall.}
+        context: pointer,
+        callback: proc(errorCode: HRESULT, env: ICoreWebView2Environment, context: pointer) {.stdcall.}
     ) {.stdcall.}
+
+    # ## Creates an evergreen WebView2 Environment using the installed WebView2 Runtime version.
+    # proc WebView2_CreateEnvironment*(
+    #     callback: proc(errorCode: HRESULT, env: ICoreWebView2Environment) {.closure.}
+    # ) =
+
+    #     # Create closure
+
+    #     # Proc is leaving Nim's memory management, so ensure Nim doesn't discard it
+    #     # TODO: How do we unref this?
+    #     var storedProcs {.global.} : seq[proc(errorCode: HRESULT, env: ICoreWebView2Environment) {.closure.}]
+    #     storedProcs.add(callback)
+
+    #     # Call internal
+    #     WebView2_CreateEnvironmentImpl(callback)
 
 
 
@@ -49,10 +64,25 @@ dynamicImportFromData(dllName, dllData):
     ## Asynchronously create a new WebView.
     proc createController*(
         this: ICoreWebView2Environment, 
-        userData: pointer,
         parentHWND: HWND, 
-        environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Controller, userData: pointer) {.stdcall.}
+        context: pointer,
+        environmentCreatedHandler: proc(errorCode: HRESULT, env: ICoreWebView2Controller, context: pointer) {.stdcall.}
     ) {.stdcall, importc:"WebView2_CreateController".}
+
+    # ## Asynchronously create a new WebView.
+    # proc createController*(
+    #     this: ICoreWebView2Environment,
+    #     parentHWND: HWND,
+    #     callback: proc(errorCode: HRESULT, env: ICoreWebView2Controller) {.closure.}
+    # ) =
+
+    #     # Proc is leaving Nim's memory management, so ensure Nim doesn't discard it
+    #     # TODO: How do we unref this?
+    #     var storedProcs {.global.} : seq[proc(errorCode: HRESULT, env: ICoreWebView2Controller) {.closure.}]
+    #     storedProcs.add(callback)
+
+    #     # Call internal
+    #     createControllerImpl(this, parentHWND, callback)
 
     ## Set bounds
     proc setBounds*(this: ICoreWebView2Controller, x: int64, y: int64, width: int64, height: int64) {.stdcall, importc:"WebView2_SetBounds".}

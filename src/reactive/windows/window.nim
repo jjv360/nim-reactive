@@ -51,6 +51,8 @@ class Window of WebViewBridge:
     var wv2env: ICoreWebView2Environment = nil
     var wv2controller: ICoreWebView2Controller = nil
 
+    var tstStr = "HelloWorld"
+
     ## Called when this component is mounted
     method onNativeMount() =
 
@@ -74,8 +76,8 @@ class Window of WebViewBridge:
             quit(3)
 
         # Create the native window
-        this.hwnd = CreateWindow(
-            #0,#WS_EX_LAYERED,                   # Extra window styles
+        this.hwnd = CreateWindowEx(
+            0,#WS_EX_LAYERED,                   # Extra window styles
             registerWindowClass(),              # Class name
             this.props{"title"}.cstring,        # Window title
             WS_OVERLAPPEDWINDOW,                # Window style
@@ -99,32 +101,34 @@ class Window of WebViewBridge:
 
         # Prepare WebView2 environment
         echo "[NimReactive] Using WebView2 " & installedVersion & " (evergreen)"
-        WebView2_CreateEnvironment(this.unsafeAddr, proc(result: HRESULT, env: ICoreWebView2Environment, userData: pointer) {.stdcall.} =
+        WebView2_CreateEnvironment(cast[pointer](this), proc(result: HRESULT, env: ICoreWebView2Environment, context: pointer) {.stdcall.} =
 
             # Check if failed
-            let this = cast[Window](userData)
+            let this = cast[Window](context)
             if result != S_OK:
                 raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
 
             # Loaded successfully, do the rest
-            alert "Created Env"
             this.wv2env = env
 
             # Create the WebView component
-            alert "hwnd " & $this.hwnd
-            this.wv2env.createController(this.unsafeAddr, this.hwnd, proc(result: HRESULT, controller: ICoreWebView2Controller, userData: pointer) {.stdcall.} =
+            alert "here1"
+            this.wv2env.createController(this.hwnd, cast[pointer](this), proc(result: HRESULT, controller: ICoreWebView2Controller, context: pointer) {.stdcall.} =
 
                 # Check if failed
-                let this = cast[Window](userData)
-                if result != S_OK:
-                    raise newException(OSError, "Unable to create WebView2 controller. " & $WebView2_GetErrorString(result))
+                echo "HERE2222"
+                alert "here2"
+                # let this = cast[Window](context)
+                # alert "here3"
+                # if result != S_OK:
+                #     raise newException(OSError, "Unable to create WebView2 controller. " & $WebView2_GetErrorString(result))
 
-                # Done
-                alert "Created controller"
-                this.wv2controller = controller
-                this.wv2controller.setBounds(0, 0, this.props{"width"}, this.props{"height"})
-                this.wv2controller.navigate("https://google.com")
-                echo "DONE"
+                # # Done
+                # alert "Created controller"
+                # this.wv2controller = controller
+                # this.wv2controller.setBounds(0, 0, this.props{"width"}, this.props{"height"})
+                # this.wv2controller.navigate("https://google.com")
+                # echo "DONE"
 
             )
 
