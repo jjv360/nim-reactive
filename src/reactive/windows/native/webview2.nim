@@ -105,9 +105,9 @@ type ICoreWebView2EnvironmentVTbl {.pure, inheritable.} = object of IUnknownVtbl
     # Release: proc(self: pointer): ULONG {.stdcall.}
     # Invoke: proc(self: pointer, result: HRESULT, obj: ptr IDispatch): HRESULT {.stdcall.}
     CreateCoreWebView2Controller: proc(self: pointer, parentWindow: HWND, handler: Callback): HRESULT
-type ICoreWebView2Environment {.pure.} = ref object
+type ICoreWebView2Environment {.pure.} = object
     lpVtbl: ptr ICoreWebView2EnvironmentVTbl
-    vtbl: ICoreWebView2EnvironmentVTbl
+    #vtbl: ICoreWebView2EnvironmentVTbl
 
 
 
@@ -172,8 +172,14 @@ proc create*(_: typedesc[WebView2], parentWindow: HWND): Future[WebView2] {.asyn
     echo "Init environment"
     var environmentFuture = Future[ptr ICoreWebView2Environment]()
     let result = CreateCoreWebView2Environment(makeCppCallback(proc(result: HRESULT, env: ptr IUnknown) {.closure.} =
+
+        # Done, retain it
+        echo "Retaining"
+        let environ = cast[ptr ICoreWebView2Environment](env)
+        discard environ.lpVtbl.AddRef(cast[ptr IUnknown](environ))
+
         echo "HERE"
-        environmentFuture.complete(cast[ptr ICoreWebView2Environment](env))
+        environmentFuture.complete(environ)
     ))
     if result != S_OK: raise newException(OSError, "Unable to create WebView2 environment. " & WebView2.errorString(result))
     let environment = await environmentFuture
@@ -183,7 +189,7 @@ proc create*(_: typedesc[WebView2], parentWindow: HWND): Future[WebView2] {.asyn
     # Init controller
     echo "Init controller"
     this.environment = environment
-    let result2 = this.environment.vtbl.CreateCoreWebView2Controller(this.environment, parentWindow, makeCppCallback(proc(result: HRESULT, env: ptr IUnknown) {.closure.} =
+    let result2 = this.environment.lpVtbl.CreateCoreWebView2Controller(this.environment, parentWindow, makeCppCallback(proc(result: HRESULT, env: ptr IUnknown) {.closure.} =
         echo "HEREE"
     ))
     if result2 != S_OK: raise newException(OSError, "Unable to create WebView2 controller. " & WebView2.errorString(result2))
