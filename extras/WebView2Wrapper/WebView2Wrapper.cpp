@@ -19,6 +19,7 @@
 using namespace Microsoft::WRL;
 
 // Vars to hold in memory
+std::vector<wil::com_ptr<ICoreWebView2Environment>> webviewEnvironments;
 std::vector<wil::com_ptr<ICoreWebView2Controller>> webviewControllers;
 
 // Convert a COM error code to a string
@@ -89,6 +90,9 @@ extern "C" __declspec(dllexport) HRESULT WebView2_CreateAndAttach(HWND parentWin
 					returnCode = result;
 					return S_OK;
 				}
+
+				// Store it
+				webviewEnvironments.push_back(env);
 				
 				// Create the web view
 				env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(

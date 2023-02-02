@@ -3,15 +3,14 @@
 ## References:
 ##   - https://www.codeproject.com/Articles/13601/COM-in-plain-C
 
+# I feel dirty after writing this code ... my god, it's bad
+# TODO: Better way of using C++ classes???
+
 
 import std/os
 import std/oids
 import std/asyncdispatch
 import winim
-import winim/com
-import ./nimDispatch
-import ./dynamicimport
-import ../dialogs
 
 
 
@@ -44,18 +43,14 @@ proc makeCppCallback(nimCallback: proc(result: HRESULT, obj: ptr IUnknown) {.clo
     cb.nimCallback = nimCallback
     cb.lpVtbl = &cb.vtbl
     cb.vtbl.QueryInterface = proc(self: ptr IUnknown, riid: REFIID, ppvObject: ptr pointer): HRESULT {.stdcall.} =
-        echo "H0"
         return E_NOINTERFACE
     cb.vtbl.AddRef = proc(self: ptr IUnknown): ULONG {.stdcall.} = 
-        echo "H1"
         return 1
     cb.vtbl.Release = proc(self: ptr IUnknown): ULONG {.stdcall.} = 
-        echo "H2"
         var cb2 = cast[Callback](self)
         GC_unref(cb2)
         return 1
     cb.vtbl.Invoke = proc(self: ptr IUnknown, result2: HRESULT, obj: ptr IUnknown): HRESULT {.stdcall.} =
-        echo "H3"
         
         # Call the Nim function
         var cb2 = cast[Callback](self)
@@ -84,6 +79,7 @@ proc makeCppCallback(nimCallback: proc(result: HRESULT, obj: ptr IUnknown) {.clo
 #{.passL:"-lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32".}
 
 # Embed + import WebView2Loader.dll
+import ./dynamicimport
 const dllName1 = "WebView2Loader_" & hostCPU & ".dll"
 const dllData1 = staticRead(dllName1)
 dynamicImportFromData(dllName1, dllData1):
@@ -116,9 +112,30 @@ type ICoreWebView2Environment {.pure.} = object
 
 
 
+
+## ICoreWebView2Controller
+
+type ICoreWebView2ControllerVTbl {.pure, inheritable.} = object of IUnknownVtbl
+    # AddRef: proc(self: pointer): ULONG {.stdcall.}
+    # Release: proc(self: pointer): ULONG {.stdcall.}
+    # Invoke: proc(self: pointer, result: HRESULT, obj: ptr IDispatch): HRESULT {.stdcall.}
+    get_IsVisible: proc(self: pointer, isVisible: var bool): HRESULT
+    put_IsVisible: proc(self: pointer, isVisible: bool): HRESULT
+type ICoreWebView2Controller {.pure.} = object
+    lpVtbl: ptr ICoreWebView2ControllerVTbl
+    #vtbl: ICoreWebView2EnvironmentVTbl
+
+
+
+
+
+
+
+
 ## WebView2 class
 type WebView2* = ref object of RootRef
     environment: ptr ICoreWebView2Environment
+    controller: ptr ICoreWebView2Controller
 
 ## Get the currently installed version of the WebView2 (evergreen) runtime. Returns a blank string if not installed.
 proc version*(_: typedesc[WebView2]): string =
@@ -174,25 +191,48 @@ proc create*(_: typedesc[WebView2], parentWindow: HWND): Future[WebView2] {.asyn
     let result = CreateCoreWebView2Environment(makeCppCallback(proc(result: HRESULT, env: ptr IUnknown) {.closure.} =
 
         # Done, retain it
-        echo "Retaining"
         let environ = cast[ptr ICoreWebView2Environment](env)
-        discard environ.lpVtbl.AddRef(cast[ptr IUnknown](environ))
+        discard environ.lpVtbl.AddRef(env)
 
-        echo "HERE"
+        # Resolve the promise
         environmentFuture.complete(environ)
+
     ))
     if result != S_OK: raise newException(OSError, "Unable to create WebView2 environment. " & WebView2.errorString(result))
     let environment = await environmentFuture
     if environment == nil:
         raise newException(OSError, "No WebView2 environment was created.")
 
+    # We have the environment!
+    this.environment = environment
+
     # Init controller
     echo "Init controller"
-    this.environment = environment
-    let result2 = this.environment.lpVtbl.CreateCoreWebView2Controller(this.environment, parentWindow, makeCppCallback(proc(result: HRESULT, env: ptr IUnknown) {.closure.} =
-        echo "HEREE"
+    var controllerFuture = Future[ptr ICoreWebView2Controller]()
+    let result3 = this.environment.lpVtbl.CreateCoreWebView2Controller(this.environment, parentWindow, makeCppCallback(proc(result: HRESULT, con: ptr IUnknown) {.closure.} =
+        
+        # Done, retain it
+        let contr = cast[ptr ICoreWebView2Controller](con)
+        discard contr.lpVtbl.AddRef(con)
+
+        # Resolve the promise
+        controllerFuture.complete(contr)
+
     ))
-    if result2 != S_OK: raise newException(OSError, "Unable to create WebView2 controller. " & WebView2.errorString(result2))
+    if result3 != S_OK: raise newException(OSError, "Unable to create WebView2 controller. " & WebView2.errorString(result3))
+    let controller = await controllerFuture
+    if controller == nil:
+        raise newException(OSError, "No WebView2 controller was created.")
+
+    # We have the controller!
+    this.controller = controller
+
+    # Size it the first time
+
+
+    # Make it visible
+    discard this.controller.lpVtbl.put_IsVisible(this.controller, true)
 
     # Done
+    echo "Damn son"
     return this
