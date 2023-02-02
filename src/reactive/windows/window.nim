@@ -113,11 +113,17 @@ class Window of WebViewBridge:
         UpdateWindow(this.hwnd)
 
         # Prepare WebView2 environment
-        # echo "[NimReactive] Using WebView2 " & WebView2.version & " (evergreen)"
-        # this.webview = await WebView2.create(this.hwnd)
-        let result = WebView2_CreateAndAttach(this.hwnd, this.wv2controller)
+        var controller: ICoreWebView2Controller
+        let result = WebView2_CreateAndAttach(this.hwnd, controller)
         if result != S_OK:
-            raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
+            raise newException(OSError, "Unable to create WebView2 controller. " & $WebView2_GetErrorString(result))
+        if controller.pointer == nil:
+            raise newException(OSError, "Unable to create WebView2 controller.")
+
+        # Set initial size
+        this.wv2controller = controller
+        this.wv2controller.setBounds(0, 0, this.width.int64, this.height.int64)
+        this.wv2controller.navigate("https://google.com")
         # WebView2_CreateEnvironment(cast[pointer](this), proc(result: HRESULT, env: ICoreWebView2Environment, context: pointer) {.cdecl.} =
 
         #     # Check if failed
@@ -228,8 +234,8 @@ class Window of WebViewBridge:
             this.height = HIWORD(lParam).float
             
             # If webview exists, resize it
-            # if this.wv2controller.pointer != nil:
-            #     this.wv2controller.setBounds(0, 0, this.width.int64, this.height.int64)
+            if this.wv2controller.pointer != nil:
+                this.wv2controller.setBounds(0, 0, this.width.int64, this.height.int64)
 
             # Done
             return 0

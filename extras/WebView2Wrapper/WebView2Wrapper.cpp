@@ -67,10 +67,10 @@ extern "C" __declspec(dllexport) const char* WebView2_GetInstalledVersion() {
 }
 
 // Create a web view and attach to a window
-extern "C" __declspec(dllexport) HRESULT WebView2_CreateAndAttach(HWND parentWindow, _Out_ ICoreWebView2Environment * outEnv) {
+extern "C" __declspec(dllexport) HRESULT WebView2_CreateAndAttach(HWND parentWindow, ICoreWebView2Controller * * outEnv) {
 
 	// Prepare
-	outEnv = nullptr;
+	//outEnv = nullptr;
 	bool exitLoop = false;
 	HRESULT returnCode = S_FALSE;
 
@@ -107,6 +107,7 @@ extern "C" __declspec(dllexport) HRESULT WebView2_CreateAndAttach(HWND parentWin
 
 						// Store it
 						webviewControllers.push_back(controller);
+						*outEnv = controller;
 
 						// Call callback
 						//char buff[100];
@@ -204,7 +205,7 @@ extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Env
 			//static wil::com_ptr<ICoreWebView2> webview;
 			wil::com_ptr<ICoreWebView2> webview;
 			controller->get_CoreWebView2(&webview);
-			webview->Navigate(L"https://www.bing.com/");
+			//webview->Navigate(L"https://www.bing.com/");
 
 			//cb(result, controller, context);
 			return S_OK;
