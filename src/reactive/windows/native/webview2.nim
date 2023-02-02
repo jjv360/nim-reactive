@@ -50,7 +50,7 @@ proc makeCppCallback(nimCallback: proc(result: HRESULT, obj: pointer) {.closure.
     cb.vtbl.Invoke = proc(self: pointer, result2: HRESULT, obj: pointer): HRESULT {.stdcall.} =
         
         # Call the Nim function
-        var cb2 = cast[ptr Callback](self)[]
+        var cb2 = cast[Callback](self)
         cb2.nimCallback(result2, obj)
 
         # Done, unmark it for GC
@@ -61,7 +61,7 @@ proc makeCppCallback(nimCallback: proc(result: HRESULT, obj: pointer) {.closure.
     GC_ref(cb)
 
     # Done
-    return cb.addr
+    return cb
 
 
 
@@ -142,6 +142,7 @@ proc createWebView*(parentWindow: HWND): Future[WebView2] {.async.} =
     echo "Init environment"
     var environmentFuture = Future[ICoreWebView2Environment]()
     discard CreateCoreWebView2Environment(makeCppCallback(proc(result: HRESULT, env: pointer) {.closure.} =
+        echo "HERE"
         environmentFuture.complete(cast[ICoreWebView2Environment](env))
     ))
     let environment = await environmentFuture
