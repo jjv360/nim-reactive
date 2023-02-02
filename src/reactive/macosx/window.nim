@@ -1,12 +1,8 @@
 import std/tables
-import std/strutils
-import std/json
 import classes
 import ../shared/basecomponent
 import ../shared/mounts
 import ../shared/webview_bridge
-import ../shared/htmloutput
-import ../shared/htmlcomponents
 import ./native/corefoundation
 import ./native/foundation
 import ./native/appkit
@@ -81,22 +77,6 @@ class Window of WebViewBridge:
 
         # Do it
         this.webview.evaluateJavaScript(js)
-
-
-    ## Called when the JS side sends us an event
-    method onJsCallback(str: string) =
-
-        # Parse it
-        let msg = parseJson(str)
-
-        # Find the target component
-        let targetID = msg{"elementID"}.getStr()
-        let element = this.renderedElements.getOrDefault(targetID, nil)
-        if element == nil: return
-        let component = WebComponent(element.component)
-        
-        # Notify it
-        component.onJsEvent(msg{"name"}.getStr(), msg{"data"}.getStr())
 
 
     ## Called by the system when the user closes the window

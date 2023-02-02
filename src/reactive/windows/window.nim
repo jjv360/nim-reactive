@@ -123,7 +123,16 @@ class Window of WebViewBridge:
         # Set initial size
         this.wv2controller = controller
         this.wv2controller.setBounds(0, 0, this.width.int64, this.height.int64)
-        this.wv2controller.navigate("https://google.com")
+
+        # Register script callback
+        # TODO: This crashes
+        this.wv2controller.addMessageReceivedHandler(cast[pointer](this), proc(context: pointer, text: cstring) {.stdcall.} =
+            echo 1
+            let this = cast[Window](context)
+            echo 2
+            this.onJsCallback($text)
+        )
+        # this.wv2controller.navigate("about:blank")
         # WebView2_CreateEnvironment(cast[pointer](this), proc(result: HRESULT, env: ICoreWebView2Environment, context: pointer) {.cdecl.} =
 
         #     # Check if failed
@@ -262,7 +271,7 @@ class Window of WebViewBridge:
     method injectJS(js: string) =
 
         # Do it
-        discard
+        this.wv2controller.executeScript(js)
 
 
 

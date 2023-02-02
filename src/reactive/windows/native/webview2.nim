@@ -8,7 +8,7 @@
 
 
 import std/os
-import winim
+import winim/lean
 
 
 # Embed + import WebView2Wrapper.dll
@@ -34,3 +34,13 @@ dynamicImportFromData(dllName, dllData):
 
     ## Navigate to URL
     proc navigate*(this: ICoreWebView2Controller, url: cstring) {.stdcall, importc:"WebView2_Navigate".}
+
+    ## Execute Javascript
+    proc executeScript*(this: ICoreWebView2Controller, script: cstring) {.stdcall, importc:"WebView2_ExecuteScript".}
+
+    ## Register a callback for when scripts call `window.chrome.webview.postMessage()`
+    proc addMessageReceivedHandler*(
+        this: ICoreWebView2Controller,
+        context: pointer,
+        callback: proc(context: pointer, text: cstring) {.stdcall.}
+    ) {.stdcall, importc:"WebView2_AddMessageReceivedHandler".}

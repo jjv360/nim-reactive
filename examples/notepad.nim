@@ -140,7 +140,7 @@ class App of Component:
                 BarIcon(icon: closeIcon, onClick: proc() = this.unmount())
 
             # Note list
-            Div(position: "absolute", top: 40, left: 0, width: 250, height: "calc(100% - 40px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", boxSizing: "border-box", overflowX: "hidden", overflowY: "scroll"):
+            Div(position: "absolute", top: 40, left: 0, width: 250, height: "calc(100% - 40px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto"):
                 
                 # Show empty info if no items found
                 Div(display: if this.notes.len == 0: "block" else: "none", text: "No notes", padding: 80, color: "black", opacity: 0.2, textAlign: "center")

@@ -2,13 +2,14 @@ import classes
 import ./basecomponent
 import ./htmloutput
 import ./webview_bridge
+import ./basewebcomponent
 import std/oids
 import std/tables
 
 
 ##
 ## Represents an HTML component
-class WebComponent of Component:
+class WebComponent of BaseWebComponent:
 
     ## The HTML output
     var htmlOutput: ReactiveHTMLOutput = nil
@@ -107,10 +108,6 @@ class WebComponent of Component:
             return ""
         else:
             return this.getRenderedParentID(fromComp.renderedParent)
-
-
-    ## Called when an event is received from the JS side
-    method onJsEvent(name: string, data: string) = discard
 
 
 

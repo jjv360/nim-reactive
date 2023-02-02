@@ -4,6 +4,7 @@
 
 //#define CINTERFACE
 #include <windows.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <tchar.h>
@@ -123,7 +124,6 @@ extern "C" __declspec(dllexport) HRESULT WebView2_CreateAndAttach(HWND parentWin
 						//static wil::com_ptr<ICoreWebView2> webview;
 						wil::com_ptr<ICoreWebView2> webview;
 						controller->get_CoreWebView2(&webview);
-						webview->Navigate(L"https://www.bing.com/");
 
 						// Done
 						exitLoop = true;
@@ -145,79 +145,6 @@ extern "C" __declspec(dllexport) HRESULT WebView2_CreateAndAttach(HWND parentWin
 
 	// Return code
 	return returnCode;
-
-}
-
-// NimClosure
-typedef struct {
-	void* nimProc;
-	void* nimEnv;
-} NimClosure;
-
-// Create environent and return a COM object for it
-typedef void(WebVew2_CreateEnvironment_Callback)(HRESULT result, ICoreWebView2Environment* env, void* context);
-extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* context, WebVew2_CreateEnvironment_Callback* cb) {
-
-	// Initialize COM
-	auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
-		cb(result, nullptr, context);
-		return;
-	}
-
-	// Create it
-	CreateCoreWebView2Environment(
-		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-			[&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
-
-				// Call callback
-				//typedef void(FuncType)(HRESULT result, ICoreWebView2Environment* env, void* nimEnv);
-				//webviewEnv = env;
-				cb(result, env, context);
-				return S_OK;
-
-			}).Get());
-
-}
-
-// Asynchronously create a new WebView.
-typedef void(WebVew2_CreateController_Callback)(HRESULT result, ICoreWebView2Controller* controller, void* context);
-extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, HWND parentWindow, void* context, WebVew2_CreateController_Callback* cb) {
-
-	// Do it
-	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
-
-			// Store it
-			webviewControllers.push_back(controller);
-
-			// Call callback
-			//char buff[100];
-			//snprintf(buff, sizeof(buff), "H2 cb=%lli context=%lli controller=%lli", cb, context, controller);
-			//MessageBoxA(0, buff, "Hello", 0);
-
-			// Set default size
-			RECT bounds;
-			GetClientRect(parentWindow, &bounds);
-			controller->put_IsVisible(true);
-			controller->put_Bounds(bounds);
-
-			//static wil::com_ptr<ICoreWebView2> webview;
-			wil::com_ptr<ICoreWebView2> webview;
-			controller->get_CoreWebView2(&webview);
-			//webview->Navigate(L"https://www.bing.com/");
-
-			//cb(result, controller, context);
-			return S_OK;
-
-		}).Get());
-
-	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
 
 }
 
@@ -289,5 +216,69 @@ extern "C" __declspec(dllexport) void WebView2_Navigate(ICoreWebView2Controller*
 	// Navigate
 	auto wstr = UTF8_to_wchar(url);
 	webview->Navigate(wstr.c_str());
+
+}
+
+// Execute JavaScript
+extern "C" __declspec(dllexport) void WebView2_ExecuteScript(ICoreWebView2Controller * controller, const char* url) {
+
+	// Get WebView
+	wil::com_ptr<ICoreWebView2> webview;
+	controller->get_CoreWebView2(&webview);
+
+	// Execute it
+	auto wstr = UTF8_to_wchar(url);
+	webview->ExecuteScript(wstr.c_str(), nullptr);
+
+}
+
+// Add handler for message received via window.chrome.webview.postMessage()
+// Returned identifier can be used to remove the listener.
+typedef void(WebView2_AddMessageReceivedCallback)(void* context, const char* text);
+extern "C" __declspec(dllexport) void WebView2_AddMessageReceivedHandler(ICoreWebView2Controller * controller, void* context, WebView2_AddMessageReceivedCallback * callback) {
+
+	// Get WebView
+	wil::com_ptr<ICoreWebView2> webview;
+	controller->get_CoreWebView2(&webview);
+
+	// Registration token (used to remove the callback)
+	EventRegistrationToken token;
+
+	// Add handler
+	webview->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+		[&](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) {
+
+			// Get string
+			//MessageBoxA(0, "1", "HERE", 0);
+			wil::unique_cotaskmem_string messageRaw;
+			args->TryGetWebMessageAsString(&messageRaw);
+			std::wstring message = messageRaw.get();
+
+			// Convert to UTF8
+			// Source: https://stackoverflow.com/a/4387335/1008736
+			// Count required buffer size (plus one for null-terminator).
+			const wchar_t* input = message.c_str();
+			size_t size = (wcslen(input) + 1) * sizeof(wchar_t);
+			char* buffer = new char[size];
+
+//#ifdef __STDC_LIB_EXT1__
+			// wcstombs_s is only guaranteed to be available if __STDC_LIB_EXT1__ is defined
+			size_t convertedSize;
+			wcstombs_s(&convertedSize, buffer, size, input, size);
+//#else
+//			std::wcstombs(buffer, input, size);
+//#endif
+
+			// Call host
+			callback(context, buffer);
+
+			// Done, cleanup
+			delete[] buffer;
+			return S_OK;
+
+		}).Get(), &token);
+
+	// Return listener token
+	//return (void*) token;
 
 }

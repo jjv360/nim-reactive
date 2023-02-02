@@ -2,8 +2,10 @@ import classes
 import std/oids
 import std/strutils
 import std/tables
+import std/json
 import ./basecomponent
 import ./htmloutput
+import ./basewebcomponent
 
 
 ## Code to inject on WebView startup ... other libraries can add to this list when they're imported to include their own code
@@ -40,8 +42,15 @@ var reactiveJsInject*: seq[string] = @[
             if (typeof data == 'object')
                 data = JSON.stringify(data)
 
-            // Send it to WebKit
-            window.webkit.messageHandlers.nimreactiveCallback.postMessage(JSON.stringify({
+            // Send it to WebKit (Apple)
+            if (window.webkit?.messageHandlers?.nimreactiveCallback) window.webkit.messageHandlers.nimreactiveCallback.postMessage(JSON.stringify({
+                elementID: elementID,
+                name: name,
+                data: data
+            }))
+
+            // Send it to WebView2 (Microsoft)
+            if (window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({
                 elementID: elementID,
                 name: name,
                 data: data
@@ -189,6 +198,22 @@ class WebViewBridge of NativeComponent:
         # echo "======="
         # echo js
         this.injectJS(js)
+
+
+    ## Called when the JS side sends us an event
+    method onJsCallback(str: string) =
+
+        # Parse it
+        let msg = parseJson(str)
+
+        # Find the target component
+        let targetID = msg{"elementID"}.getStr()
+        let element = this.renderedElements.getOrDefault(targetID, nil)
+        if element == nil: return
+        let component = BaseWebComponent(element.component)
+        
+        # Notify it
+        component.onJsEvent(msg{"name"}.getStr(), msg{"data"}.getStr())
 
 
 
