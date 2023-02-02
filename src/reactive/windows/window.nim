@@ -113,7 +113,7 @@ class Window of WebViewBridge:
 
         # Prepare WebView2 environment
         echo "[NimReactive] Using WebView2 " & WebView2.version & " (evergreen)"
-        this.webview = await createWebView(this.hwnd)
+        this.webview = await WebView2.create(this.hwnd)
         # let result = WebView2_CreateAndAttach(this.hwnd, this.wv2controller)
         # if result != S_OK:
         #     raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
