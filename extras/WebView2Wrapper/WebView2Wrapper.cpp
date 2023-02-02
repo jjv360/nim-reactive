@@ -2,6 +2,7 @@
 // This is a simple wrapper around WebView2 which allows usage from Nim.
 // All strings are UTF8-encoded
 
+//#define CINTERFACE
 #include <windows.h>
 #include <stdlib.h>
 #include <string>
@@ -16,6 +17,9 @@
 #include "WebView2.h"
 
 using namespace Microsoft::WRL;
+
+// Vars to hold in memory
+std::vector<wil::com_ptr<ICoreWebView2Controller>> webviewControllers;
 
 // Convert a COM error code to a string
 extern "C" __declspec(dllexport) const char* WebView2_GetErrorString(HRESULT hr) {
@@ -61,8 +65,83 @@ extern "C" __declspec(dllexport) const char* WebView2_GetInstalledVersion() {
 
 }
 
-// Created environments held in memory
-//std::vector
+// Create a web view and attach to a window
+extern "C" __declspec(dllexport) HRESULT WebView2_CreateAndAttach(HWND parentWindow, _Out_ ICoreWebView2Environment * outEnv) {
+
+	// Prepare
+	outEnv = nullptr;
+	bool exitLoop = false;
+	HRESULT returnCode = S_FALSE;
+
+	// Initialize COM
+	auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	if (result != S_OK && result != S_FALSE)		// <-- False if it's already initialized
+		return result;
+
+	// Create the environment
+	CreateCoreWebView2Environment(
+		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
+			[&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+
+				// Check output
+				if (result != S_OK) {
+					exitLoop = true;
+					returnCode = result;
+					return S_OK;
+				}
+				
+				// Create the web view
+				env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+					[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+
+						// Check output
+						if (result != S_OK) {
+							exitLoop = true;
+							returnCode = result;
+							return S_OK;
+						}
+
+						// Store it
+						webviewControllers.push_back(controller);
+
+						// Call callback
+						//char buff[100];
+						//snprintf(buff, sizeof(buff), "H2 cb=%lli context=%lli controller=%lli", cb, context, controller);
+						//MessageBoxA(0, buff, "Hello", 0);
+
+						// Set default size
+						RECT bounds;
+						GetClientRect(parentWindow, &bounds);
+						controller->put_IsVisible(true);
+						controller->put_Bounds(bounds);
+
+						//static wil::com_ptr<ICoreWebView2> webview;
+						wil::com_ptr<ICoreWebView2> webview;
+						controller->get_CoreWebView2(&webview);
+						webview->Navigate(L"https://www.bing.com/");
+
+						// Done
+						exitLoop = true;
+						returnCode = result;
+						return S_OK;
+
+					}).Get());
+	
+				return S_OK;
+
+			}).Get());
+
+	// Run event loop until we're done
+	MSG msg;
+	while (!exitLoop && GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	// Return code
+	return returnCode;
+
+}
 
 // NimClosure
 typedef struct {
@@ -75,11 +154,11 @@ typedef void(WebVew2_CreateEnvironment_Callback)(HRESULT result, ICoreWebView2En
 extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* context, WebVew2_CreateEnvironment_Callback* cb) {
 
 	// Initialize COM
-	//auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	//if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
-	//	callback(result, nullptr, userData);
-	//	return;
-	//}
+	auto result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	if (result != S_OK && result != S_FALSE) {	// <-- False if it's already initialized
+		cb(result, nullptr, context);
+		return;
+	}
 
 	// Create it
 	CreateCoreWebView2Environment(
@@ -88,84 +167,11 @@ extern "C" __declspec(dllexport) void WebView2_CreateEnvironment(void* context, 
 
 				// Call callback
 				//typedef void(FuncType)(HRESULT result, ICoreWebView2Environment* env, void* nimEnv);
+				//webviewEnv = env;
 				cb(result, env, context);
 				return S_OK;
 
 			}).Get());
-
-}
-
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_DESTROY  - post a quit message and return
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	TCHAR greeting[] = _T("Hello, Windows desktop!");
-
-	switch (message)
-	{
-	case WM_SIZE:
-		//if (webviewController != nullptr) {
-		//	RECT bounds;
-		//	GetClientRect(hWnd, &bounds);
-		//	webviewController->put_Bounds(bounds);
-		//};
-		break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
-		break;
-	}
-
-	return 0;
-}
-
-HWND test() {
-
-	WNDCLASSEX wcex;
-
-	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
-	wcex.hInstance = 0;
-	wcex.hIcon = 0;// LoadIcon(hInstance, IDI_APPLICATION);
-	wcex.hCursor = 0;// LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wcex.lpszMenuName = NULL;
-	wcex.lpszClassName = L"MMTEST";
-	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
-
-	if (!RegisterClassEx(&wcex))
-	{
-		MessageBox(NULL,
-			_T("Call to RegisterClassEx failed!"),
-			_T("Windows Desktop Guided Tour"),
-			NULL);
-
-		return 0;
-	}
-
-	HWND hWnd = CreateWindow(
-		L"MMTEST",
-		L"Hello",
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		1200, 900,
-		NULL,
-		NULL,
-		NULL,
-		NULL
-	);
-
-	ShowWindow(hWnd, SW_SHOWDEFAULT);
-	UpdateWindow(hWnd);
-	return hWnd;
 
 }
 
@@ -174,16 +180,11 @@ typedef void(WebVew2_CreateController_Callback)(HRESULT result, ICoreWebView2Con
 extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Environment* env, HWND parentWindow, void* context, WebVew2_CreateController_Callback* cb) {
 
 	// Do it
-	//char buff[100];
-	//snprintf(buff, sizeof(buff), "HWND %lli", parentWindow);
-	//MessageBoxA(0, buff, "Hello", 0);
-
-	
-
-	//MessageBoxA(0, "H1", "Hello", 0);
-	HWND hWnd = test();
-	env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+	env->CreateCoreWebView2Controller(parentWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 		[&](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+
+			// Store it
+			webviewControllers.push_back(controller);
 
 			// Call callback
 			//char buff[100];
@@ -192,10 +193,12 @@ extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Env
 
 			// Set default size
 			RECT bounds;
-			GetClientRect(hWnd, &bounds);
+			GetClientRect(parentWindow, &bounds);
+			controller->put_IsVisible(true);
 			controller->put_Bounds(bounds);
 
-			static wil::com_ptr<ICoreWebView2> webview;
+			//static wil::com_ptr<ICoreWebView2> webview;
+			wil::com_ptr<ICoreWebView2> webview;
 			controller->get_CoreWebView2(&webview);
 			webview->Navigate(L"https://www.bing.com/");
 
@@ -207,6 +210,18 @@ extern "C" __declspec(dllexport) void WebView2_CreateController(ICoreWebView2Env
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+}
+
+// Drain the event queue once
+extern "C" __declspec(dllexport) void WebView2_MessageLoop() {
+
+	// Run it
+	MSG msg;
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}

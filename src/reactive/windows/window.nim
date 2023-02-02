@@ -33,6 +33,9 @@ proc registerWindowClass*(): string =
     wc.hInstance = GetModuleHandle(nil)
     wc.lpszClassName = WindowClassName
     wc.style = CS_HREDRAW or CS_VREDRAW
+    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClassEx(wc)
 
     # Done
@@ -48,17 +51,24 @@ class Window of WebViewBridge:
     var hwnd: HWND = 0
 
     ## WebView2 instance
-    var wv2env: ICoreWebView2Environment = nil
-    var wv2controller: ICoreWebView2Controller = nil
+    var webview: WebView2
 
     var tstStr = "HelloWorld"
+
+    ## Current window size
+    var width = 0.0
+    var height = 0.0
 
     ## Called when this component is mounted
     method onNativeMount() =
 
+        # Load asynchronously
+        asyncCheck this.onNativeMountAsync()
+
+    method onNativeMountAsync() {.async.} =
+
         # Check if WebView2 is available
-        let installedVersion = $WebView2_GetInstalledVersion()
-        if installedVersion == "":
+        if WebView2.version == "":
 
             # Prompt the user to ask to install it
             # TODO: Automatically download and install it, showing the user the progress...
@@ -96,43 +106,49 @@ class Window of WebViewBridge:
         activeHWNDs[this.hwnd] = this
 
         # Show window
+        this.width = this.props{"width"}
+        this.height = this.props{"height"}
         ShowWindow(this.hwnd, SW_SHOWDEFAULT)
         UpdateWindow(this.hwnd)
 
         # Prepare WebView2 environment
-        echo "[NimReactive] Using WebView2 " & installedVersion & " (evergreen)"
-        WebView2_CreateEnvironment(cast[pointer](this), proc(result: HRESULT, env: ICoreWebView2Environment, context: pointer) {.stdcall.} =
+        echo "[NimReactive] Using WebView2 " & WebView2.version & " (evergreen)"
+        this.webview = await createWebView(this.hwnd)
+        # let result = WebView2_CreateAndAttach(this.hwnd, this.wv2controller)
+        # if result != S_OK:
+        #     raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
+        # WebView2_CreateEnvironment(cast[pointer](this), proc(result: HRESULT, env: ICoreWebView2Environment, context: pointer) {.cdecl.} =
 
-            # Check if failed
-            let this = cast[Window](context)
-            if result != S_OK:
-                raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
+        #     # Check if failed
+        #     let this = cast[Window](context)
+        #     if result != S_OK:
+        #         raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
 
-            # Loaded successfully, do the rest
-            this.wv2env = env
+        #     # Loaded successfully, do the rest
+        #     this.wv2env = env
 
-            # Create the WebView component
-            echo "Creating the controller..."
-            this.wv2env.createController(this.hwnd, cast[pointer](this), proc(result: HRESULT, controller: ICoreWebView2Controller, context: pointer) {.stdcall.} =
+        #     # Create the WebView component
+        #     echo "Creating the controller..."
+        #     this.wv2env.createController(this.hwnd, cast[pointer](this), proc(result: HRESULT, controller: ICoreWebView2Controller, context: pointer) {.cdecl.} =
 
-                # Check if failed
-                echo "HERE2222"
-                #alert "here2"
-                # let this = cast[Window](context)
-                # alert "here3"
-                # if result != S_OK:
-                #     raise newException(OSError, "Unable to create WebView2 controller. " & $WebView2_GetErrorString(result))
+        #         # Check if failed
+        #         echo "HERE2222"
+        #         alert "here2"
+        #         let this = cast[Window](context)
+        #         alert "here3"
+        #         if result != S_OK:
+        #             raise newException(OSError, "Unable to create WebView2 controller. " & $WebView2_GetErrorString(result))
 
-                # # Done
-                # alert "Created controller"
-                # this.wv2controller = controller
-                # this.wv2controller.setBounds(0, 0, this.props{"width"}, this.props{"height"})
-                # this.wv2controller.navigate("https://google.com")
-                # echo "DONE"
+        #         # Done
+        #         alert "Created controller"
+        #         this.wv2controller = controller
+        #         this.wv2controller.setBounds(0, 0, this.props{"width"}, this.props{"height"})
+        #         this.wv2controller.navigate("https://google.com")
+        #         echo "DONE"
 
-            )
+        #     )
 
-        )
+        # )
 
         # Create graphics memory for the window
         # let screenDC = GetDC(0)
@@ -158,7 +174,7 @@ class Window of WebViewBridge:
         #     echo "[YaGUI] Warning: Unable to call SetLayeredWindowAttributes. " & GetLastErrorString()
 
         # Show window
-        ShowWindow(this.hwnd, SW_SHOWNORMAL)
+        # ShowWindow(this.hwnd, SW_SHOWNORMAL)
 
         # Draw background color
         # this.p_updateLayeredWindow(hwnd)
@@ -207,7 +223,14 @@ class Window of WebViewBridge:
         elif uMsg == WM_SIZE:
 
             # Window has been resized
-            echo "Resized"
+            this.width = LOWORD(lParam).float
+            this.height = HIWORD(lParam).float
+            
+            # If webview exists, resize it
+            # if this.wv2controller.pointer != nil:
+            #     this.wv2controller.setBounds(0, 0, this.width.int64, this.height.int64)
+
+            # Done
             return 0
 
         else:

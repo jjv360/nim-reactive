@@ -25,3 +25,6 @@ task copyWebView2, "Copy WebView2Wrapper.dll":
     cpFile("extras/WebView2Wrapper/Release/WebView2Wrapper.dll", "src/reactive/windows/native/WebView2Wrapper_i386.dll")
     cpFile("extras/WebView2Wrapper/x64/Release/WebView2Wrapper.dll", "src/reactive/windows/native/WebView2Wrapper_amd64.dll")
     cpFile("extras/WebView2Wrapper/arm64/Release/WebView2Wrapper.dll", "src/reactive/windows/native/WebView2Wrapper_arm64.dll")
+    # cpFile("extras/WebView2Wrapper/Release/WebView2Wrapper.lib", "src/reactive/windows/native/WebView2Wrapper_i386.lib")
+    # cpFile("extras/WebView2Wrapper/x64/Release/WebView2Wrapper.lib", "src/reactive/windows/native/WebView2Wrapper_amd64.lib")
+    # cpFile("extras/WebView2Wrapper/arm64/Release/WebView2Wrapper.lib", "src/reactive/windows/native/WebView2Wrapper_arm64.lib")

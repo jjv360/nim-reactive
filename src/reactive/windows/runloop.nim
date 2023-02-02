@@ -1,7 +1,8 @@
 import std/asyncdispatch
 import ./dialogs
-import winim/com
+import winim/lean
 import ../shared/mounts
+import ./native/webview2
 
 ## Entry point for a Reactive app
 proc reactiveStart*(code: proc()) =
@@ -12,26 +13,24 @@ proc reactiveStart*(code: proc()) =
         # Set DPI awareness
         SetProcessDPIAware()
 
-        # Initialize ActiveX
-        #CoInitializeEx(nil, COINIT_APARTMENTTHREADED)
-
         # Run their code
         code()
 
-        # Create Win32 timer so our event loop is running at a minimum of 2ms, this is necessary to allow
-        # asyncdispatch to run alongside the Win32 event loop in the same thread
-        SetTimer(0, 0, 2, nil)
-
         # Run the Windows event loop
         var msg: MSG
-        while GetMessage(msg, 0, 0, 0) != 0:
-            # if msg.message != 275: echo "MSG: " & $msg.message
-            TranslateMessage(msg)
-            DispatchMessage(msg)
+        while true:
 
-            # Process asyncdispatch's event loop
+            # Drain the Win32 event queue
+            while PeekMessage(msg, 0, 0, 0, PM_REMOVE) != 0:
+                TranslateMessage(msg)
+                DispatchMessage(msg)
+
+            # Drain the WebView's event loop
+            #WebView2_MessageLoop()
+
+            # Drain the asyncdispatch event queue
             if asyncdispatch.hasPendingOperations():
-                asyncdispatch.drain(2)
+                asyncdispatch.drain(timeout = 500)
 
             # Quit the app if there's no pending operations on asyncdispatch and there's no mounted components
             if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:
