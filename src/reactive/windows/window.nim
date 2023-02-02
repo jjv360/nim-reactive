@@ -51,7 +51,8 @@ class Window of WebViewBridge:
     var hwnd: HWND = 0
 
     ## WebView2 instance
-    var webview: WebView2
+    # var webview: WebView2
+    var wv2controller: ICoreWebView2Controller
 
     var tstStr = "HelloWorld"
 
@@ -68,7 +69,7 @@ class Window of WebViewBridge:
     method onNativeMountAsync() {.async.} =
 
         # Check if WebView2 is available
-        if WebView2.version == "":
+        if $WebView2_GetInstalledVersion() == "":
 
             # Prompt the user to ask to install it
             # TODO: Automatically download and install it, showing the user the progress...
@@ -112,11 +113,11 @@ class Window of WebViewBridge:
         UpdateWindow(this.hwnd)
 
         # Prepare WebView2 environment
-        echo "[NimReactive] Using WebView2 " & WebView2.version & " (evergreen)"
-        this.webview = await WebView2.create(this.hwnd)
-        # let result = WebView2_CreateAndAttach(this.hwnd, this.wv2controller)
-        # if result != S_OK:
-        #     raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
+        # echo "[NimReactive] Using WebView2 " & WebView2.version & " (evergreen)"
+        # this.webview = await WebView2.create(this.hwnd)
+        let result = WebView2_CreateAndAttach(this.hwnd, this.wv2controller)
+        if result != S_OK:
+            raise newException(OSError, "Unable to create WebView2 environment. " & $WebView2_GetErrorString(result))
         # WebView2_CreateEnvironment(cast[pointer](this), proc(result: HRESULT, env: ICoreWebView2Environment, context: pointer) {.cdecl.} =
 
         #     # Check if failed
