@@ -114,7 +114,7 @@ class WebComponent of BaseWebComponent:
 
 ##
 ## Represents a <div> tag
-class Div of WebComponent:
+class View of WebComponent:
 
     ## Returns raw HTML component information
     method renderHTML(): ReactiveHTMLOutput =
@@ -139,6 +139,14 @@ class Div of WebComponent:
             output.jsOnMount &= ";\n element.onmouseout = function(e) { window.nimreactiveEmit(element.id, 'event:onMouseOut') } "
             output.jsOnUpdate &= ";\n element.onmouseout = function(e) { window.nimreactiveEmit(element.id, 'event:onMouseOut') } "
 
+        if this.props.hasKey("onPointerOver"):
+            output.jsOnMount &= ";\n element.onpointerover = function(e) { window.nimreactiveEmit(element.id, 'event:onPointerOver') } "
+            output.jsOnUpdate &= ";\n element.onpointerover = function(e) { window.nimreactiveEmit(element.id, 'event:onPointerOver') } "
+
+        if this.props.hasKey("onPointerOut"):
+            output.jsOnMount &= ";\n element.onpointerout = function(e) { window.nimreactiveEmit(element.id, 'event:onPointerOut') } "
+            output.jsOnUpdate &= ";\n element.onpointerout = function(e) { window.nimreactiveEmit(element.id, 'event:onPointerOut') } "
+
         return output
 
 
@@ -146,9 +154,11 @@ class Div of WebComponent:
     method onJsEvent(name: string, data: string) =
 
         # Check event
-        if name == "event:onClick":         this.sendEventToProps("onClick")
-        elif name == "event:onMouseOver":   this.sendEventToProps("onMouseOver")
-        elif name == "event:onMouseOut":    this.sendEventToProps("onMouseOut")
+        if name == "event:onClick":             this.sendEventToProps("onClick")
+        elif name == "event:onMouseOver":       this.sendEventToProps("onMouseOver")
+        elif name == "event:onMouseOut":        this.sendEventToProps("onMouseOut")
+        elif name == "event:onPointerOver":     this.sendEventToProps("onPointerOver")
+        elif name == "event:onPointerOut":      this.sendEventToProps("onPointerOut")
 
 
 
@@ -180,13 +190,48 @@ class TextArea of WebComponent:
         output.tagName = "textarea"
 
         # Add current value
-        let js = ";\n element.value = " & this.props{"text"}.string.jsQuotedString()
+        let js = ";\n element.value = " & this.props{"value"}.string.jsQuotedString()
         output.jsOnMount = js
         output.jsOnUpdate = js
 
         # Add change listener
         if this.props{"onValue"}:
             let js = ";\n element.oninput = function(e) { window.nimreactiveEmit(element.id, 'event:onValue', e.target.value) } "
+            output.jsOnMount &= js
+            output.jsOnUpdate &= js
+
+        return output
+
+
+    ## Called when an event is received from the JS side
+    method onJsEvent(name: string, data: string) =
+
+        # Check event
+        if name == "event:onValue":
+            this.sendEventToProps("onValue", data)
+
+
+
+
+
+
+##
+## Rendered as an <input> tag
+class InputField of WebComponent:
+
+    ## Returns raw HTML component information
+    method renderHTML(): ReactiveHTMLOutput =
+        let output = super.renderHTML()
+        output.tagName = "input"
+
+        # Add current value
+        let js = ";\n element.value = " & this.props{"value"}.string.jsQuotedString()
+        output.jsOnMount = js
+        output.jsOnUpdate = js
+
+        # Add change listener
+        if this.props{"onValue"}:
+            let js = ";\n element.onchange = function(e) { window.nimreactiveEmit(element.id, 'event:onValue', e.target.value) } "
             output.jsOnMount &= js
             output.jsOnUpdate &= js
 
