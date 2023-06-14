@@ -17,6 +17,9 @@ proc reactiveStart*(code: proc()) =
         # Run their code
         code()
 
+        # Notify that the app has finished launching
+        NSApplication.sharedApplication.finishLaunching()
+
         # Do event loop
         while true:
 
@@ -31,6 +34,9 @@ proc reactiveStart*(code: proc()) =
 
                 # Process the event
                 NSApplication.sharedApplication.sendEvent(event)
+
+                # Update windows
+                NSApplication.sharedApplication.updateWindows()
         
             # Drain the asyncdispatch event queue
             if asyncdispatch.hasPendingOperations():

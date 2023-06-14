@@ -57,6 +57,12 @@ objcImport:
         ## Deactivates the receiver.
         proc deactivate*()
 
+        ## Activates the app, opens any files specified by the NSOpen user default, and unhighlights the app’s icon.
+        proc finishLaunching*()
+
+        ## Sends an update message to each onscreen window.
+        proc updateWindows*()
+
 
 
 

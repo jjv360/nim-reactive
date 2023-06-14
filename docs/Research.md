@@ -17,3 +17,4 @@ This document holds some links to useful references online.
 ## Mac OS X
 
 - [Objective-C runtime](https://github.com/jangko/objc)
+- [Demystifying NSApplication by recreating it](https://www.cocoawithlove.com/2009/01/demystifying-nsapplication-by.html)
