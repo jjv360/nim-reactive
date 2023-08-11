@@ -249,7 +249,7 @@ extern "C" __declspec(dllexport) void WebView2_AddMessageReceivedHandler(ICoreWe
 		[&](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) {
 
 			// Get string
-			//MessageBoxA(0, "1", "HERE", 0);
+			MessageBoxA(0, "1", "HERE", 0);
 			wil::unique_cotaskmem_string messageRaw;
 			args->TryGetWebMessageAsString(&messageRaw);
 			std::wstring message = messageRaw.get();

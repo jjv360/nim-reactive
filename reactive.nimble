@@ -1,5 +1,5 @@
 # Package
-version         = "0.1.0"
+version         = "0.3.2"
 author          = "Josh Fox"
 description     = "Create reactive UI apps"
 license         = "MIT"

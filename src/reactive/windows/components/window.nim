@@ -3,13 +3,13 @@ import std/browsers
 import std/asyncdispatch
 import classes
 import winim/lean
-import ../shared/basecomponent
-import ../shared/mounts
-import ../shared/webview_bridge
-import ../shared/htmloutput
-import ../shared/htmlcomponents
-import ./dialogs
-import ./native/webview2
+import ../../shared/basecomponent
+import ../../shared/mounts
+import ../../shared/webview_bridge
+import ../../shared/htmloutput
+import ../../shared/htmlcomponents
+import ../dialogs
+import ../native/webview2
 
 ## List of all active windows
 var activeHWNDs: Table[HWND, RootRef]

@@ -26,11 +26,11 @@ proc reactiveStart*(code: proc()) =
                 DispatchMessage(msg)
 
             # Drain the WebView's event loop
-            #WebView2_MessageLoop()
+            # WebView2_MessageLoop()
 
-            # Drain the asyncdispatch event queue
+            # Process pending asyncdispatch events
             if asyncdispatch.hasPendingOperations():
-                asyncdispatch.drain(timeout = 500)
+                asyncdispatch.drain(timeout = 50)
 
             # Quit the app if there's no pending operations on asyncdispatch and there's no mounted components
             if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:

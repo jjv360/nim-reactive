@@ -23,7 +23,7 @@ class MenuItem of Component:
 
     ## Render
     method render(): Component = components:
-        Div(
+        View(
             width: "100%", 
             height: 88, 
             padding: 12,
@@ -43,10 +43,10 @@ class MenuItem of Component:
                 this.renderAgain()
             ,
         ):
-            # Div(width: 32, height: 32, margin: 20, border: "1px solid red", flex: "0 0 auto")
-            # Div(margin: 20, flex: "1 1 1px"):
-            Div(text: this.props{"title"}, fontSize: 15, fontWeight: "bold", color: "black")
-            Div(text: this.props{"text"}, fontSize: 13, color: "black", opacity: 0.4, marginTop: 5)
+            # View(width: 32, height: 32, margin: 20, border: "1px solid red", flex: "0 0 auto")
+            # View(margin: 20, flex: "1 1 1px"):
+            View(text: this.props{"title"}, fontSize: 15, fontWeight: "bold", color: "black")
+            View(text: this.props{"text"}, fontSize: 13, color: "black", opacity: 0.4, marginTop: 5)
 
 
 ## Menubar Button
@@ -57,7 +57,7 @@ class BarIcon of Component:
 
     ## Render
     method render(): Component = components:
-        Div(
+        View(
             onClick: this.props{"onClick"},
             onMouseOver: proc() =
                 this.isHovering = true
@@ -130,20 +130,20 @@ class App of Component:
         Window(x: 50, y: 50, width: 800, height: 600, title: "Notepad"):
 
             # Background
-            Div(backgroundColor: "#f5efc9", position: "absolute", top: 0, left: 0, width: "100%", height: "100%")
+            View(backgroundColor: "#f5efc9", position: "absolute", top: 0, left: 0, width: "100%", height: "100%")
 
             # Header
-            Div(backgroundColor: "rgba(0, 0, 0, 0.1)", position: "absolute", top: 0, left: 0, width: "100%", height: 40, display: "flex", alignItems: "center", borderBottom: "1px solid rgba(0, 0, 0, 0.1)"):
+            View(backgroundColor: "rgba(0, 0, 0, 0.1)", position: "absolute", top: 0, left: 0, width: "100%", height: 40, display: "flex", alignItems: "center", borderBottom: "1px solid rgba(0, 0, 0, 0.1)"):
                 BarIcon(icon: openIcon)
                 BarIcon(icon: saveIcon)
-                Div(flex: "1 1 auto")
+                View(flex: "1 1 auto")
                 BarIcon(icon: closeIcon, onClick: proc() = this.unmount())
 
             # Note list
-            Div(position: "absolute", top: 40, left: 0, width: 250, height: "calc(100% - 40px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto"):
+            View(position: "absolute", top: 40, left: 0, width: 250, height: "calc(100% - 40px)", borderRight: "1px solid rgba(0, 0, 0, 0.1)", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto"):
                 
                 # Show empty info if no items found
-                Div(display: if this.notes.len == 0: "block" else: "none", text: "No notes", padding: 80, color: "black", opacity: 0.2, textAlign: "center")
+                View(display: if this.notes.len == 0: "block" else: "none", text: "No notes", padding: 80, color: "black", opacity: 0.2, textAlign: "center")
 
                 # Show children
                 mapIt(this.notes):
@@ -180,7 +180,7 @@ class App of Component:
             )
 
             # No note selected message
-            Div(
+            View(
                 text: "No note selected", 
                 display: if this.selectedNoteIndex >= 0 and this.selectedNoteIndex < this.notes.len: "none" else: "block", 
                 position: "absolute", 

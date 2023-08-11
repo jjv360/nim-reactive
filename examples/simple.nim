@@ -5,4 +5,4 @@ import ../src/reactive # import reactive
 reactiveStart:
     reactiveMount:
         Window:
-            Div(text: "Hello world!")
+            View(text: "Hello world!")

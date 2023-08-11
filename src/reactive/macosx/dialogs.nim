@@ -30,10 +30,10 @@ proc alert*(text: string, title: string = "", icon: ReactiveDialogIcon = dlgInfo
     
     # CoreFoundation can't use data URIs, so save our alert icons to a temporary folder ... unfortunately ...
     try:
-        const errorIconData = staticRead("../resources/dialog_error.png")
-        const infoIconData = staticRead("../resources/dialog_info.png")
-        const warningIconData = staticRead("../resources/dialog_warning.png")
-        const questionIconData = staticRead("../resources/dialog_question.png")
+        const errorIconData = staticRead("./resources/dialog_error.png")
+        const infoIconData = staticRead("./resources/dialog_info.png")
+        const warningIconData = staticRead("./resources/dialog_warning.png")
+        const questionIconData = staticRead("./resources/dialog_question.png")
         if not fileExists(ephemeralDirectory() / "nimreactive-dialog-error.png"): writeFile(ephemeralDirectory() / "nimreactive-dialog-error.png", errorIconData)
         if not fileExists(ephemeralDirectory() / "nimreactive-dialog-info.png"): writeFile(ephemeralDirectory() / "nimreactive-dialog-info.png", infoIconData)
         if not fileExists(ephemeralDirectory() / "nimreactive-dialog-warning.png"): writeFile(ephemeralDirectory() / "nimreactive-dialog-warning.png", warningIconData)

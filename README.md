@@ -11,7 +11,7 @@ import reactive
 reactiveStart:
     reactiveMount:
         Window:
-            Div(text: "Hello world!")
+            View(text: "Hello world!")
 ```
 
 This library is heavily inspired by React Native, except it's reversed. In React Native, all your logic is in JavaScript with calls into native to render components. With this library, all your logic is in native code with calls to JavaScript to render components.

@@ -95,7 +95,8 @@ Method              | Description
 
 Component           | Type      | Description
 --------------------|-----------|----------------
-`Div`               | Web       | A `<div>` tag.
 `Text`              | Web       | A `<font>` tag.
 `TextArea`          | Web       | A `<textarea>` tag with callbacks for when the value changes.
+`TrayIcon`          | Native    | A native component which renders a system tray icon.
+`View`              | Web       | A `<div>` tag.
 `Window`            | Bridge    | Renders a native window on screen, and allows Web components to be rendered inside.
