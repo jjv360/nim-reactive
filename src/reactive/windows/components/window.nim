@@ -8,6 +8,7 @@ import ../../shared/mounts
 import ../../shared/webview_bridge
 import ../../shared/htmloutput
 import ../../shared/htmlcomponents
+import ../../shared/properties
 import ../dialogs
 import ../native/webview2
 

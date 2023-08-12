@@ -4,7 +4,10 @@ import winim/mean
 import pixie
 import ../../shared/basecomponent
 import ../../shared/assets
+import ../../shared/events
+import ../../shared/properties
 import ./hwnd_component
+import ./menu
 
 ## Tray message ID
 const WM_MyTrayMessage = WM_USER + 1
@@ -164,23 +167,49 @@ class TrayIcon of HWNDComponent:
         let uMsg2 = LOWORD(lParam)
         if uMsg2 == WM_LBUTTONUP:
 
-            # User activated the tray icon
-            echo "Clicked!"
-            this.sendEventToProps("onPress")
-            this.sendEventToProps("onActivate")
+            # User activated the tray icon, process click event
+            let event = ReactivePointerEvent().init("onPress")
+            this.sendEventToProps(event)
+            if event.isHandled: 
+                return 0
+
+            # Process activate event
+            if this.sendEventToProps("onActivate").isHandled:
+                return 0
+
+            # Show menu
+            this.openContextMenu()
             return 0
 
         elif uMsg2 == WM_CONTEXTMENU:
 
             # User activated the tray icon
-            echo "Context menu!"
-            this.sendEventToProps("onContextMenu")
-            this.sendEventToProps("onActivate")
+            if this.sendEventToProps("onContextMenu").isHandled: 
+                return 0
+
+            # Process activate event
+            if this.sendEventToProps("onActivate").isHandled:
+                return 0
+
+            # Show menu
+            this.openContextMenu()
             return 0
 
         else:
 
             # Pass on to base
             return super.wndProc(hwnd, uMsg, wParam, lParam)
+
+
+    ## Display the context menu for this tray icon
+    method openContextMenu() =
+
+        # Build menu
+        let menuComponent = this.findChild(Menu)
+        if menuComponent == nil:
+            return
+        
+        # Show menu
+        menuComponent.displayContextMenu()
 
         

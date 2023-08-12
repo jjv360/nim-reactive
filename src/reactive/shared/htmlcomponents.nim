@@ -1,10 +1,11 @@
+import std/oids
+import std/tables
 import classes
 import ./basecomponent
 import ./htmloutput
 import ./webview_bridge
 import ./basewebcomponent
-import std/oids
-import std/tables
+import ./properties
 
 
 ##

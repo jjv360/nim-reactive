@@ -1,179 +1,8 @@
-import classes
 import std/tables
 import std/strutils
-
-
-##
-## Represents an event
-class ReactiveEvent:
-
-    ## Event name
-    var name = ""
-
-    ## Event value
-    var value = ""
-
-    ## Constructor
-    method init(name: string, value: string = "") =
-        this.name = name
-        this.value = value
-
-
-##
-## Property item within a property bundle
-class ReactivePropertyItem:
-
-    ## Value storage
-    var stringValue = ""
-    var intValue = 0
-    var floatValue = 0.0
-    var procValue: proc(arg: ReactiveEvent) = nil
-
-    ## Original value type
-    var isString = false
-    var isInt = false
-    var isFloat = false
-    var isNumber = false
-    var isProc = false
-
-
-## Convert a string to a PropertyItem
-converter propFromString*(value: string) : ReactivePropertyItem =
-
-    # Set string
-    let item = ReactivePropertyItem.init()
-    item.stringValue = value
-    item.isString = true
-
-    # Set int
-    try:
-        item.intValue = value.parseInt()
-    except CatchableError:
-        discard
-
-    # Set float
-    try:
-        item.floatValue = value.parseFloat()
-    except CatchableError:
-        discard
-
-    # Done
-    return item
-
-## Convert an int to a ReactivePropertyItem
-converter propFromInt*(value: int) : ReactivePropertyItem =
-    let item = ReactivePropertyItem.init()
-    item.stringValue = $value
-    item.intValue = value
-    item.floatValue = value.toFloat()
-    item.isInt = true
-    item.isNumber = true
-    return item
-
-## Convert a bool to a ReactivePropertyItem
-converter propFromBool*(value: bool) : ReactivePropertyItem =
-    let item = ReactivePropertyItem.init()
-    item.stringValue = $value
-    item.intValue = if value: 1 else: 0
-    item.floatValue = if value: 1 else: 0
-    item.isInt = true
-    item.isNumber = true
-    return item
-
-## Convert a float to a ReactivePropertyItem
-converter propFromFloat*(value: float) : ReactivePropertyItem =
-    let item = ReactivePropertyItem.init()
-    item.stringValue = $value
-    item.intValue = value.toInt()
-    item.floatValue = value
-    item.isFloat = true
-    item.isNumber = true
-    return item
-
-## Convert an event proc to a ReactivePropertyItem
-converter propFromProc*(value: proc(event: ReactiveEvent)) : ReactivePropertyItem =
-    let item = ReactivePropertyItem.init()
-    item.procValue = value
-    item.stringValue = "<proc>"
-    item.intValue = 1
-    item.floatValue = 1
-    item.isProc = true
-    return item
-
-## Convert a proc to a ReactivePropertyItem
-converter propFromProc*(value: proc()) : ReactivePropertyItem =
-    let item = ReactivePropertyItem.init()
-    item.procValue = proc(_: ReactiveEvent) = value()
-    item.stringValue = "<proc>"
-    item.intValue = 1
-    item.floatValue = 1
-    item.isProc = true
-    return item
-
-## Save a proc to a ReactivePropertyItem ... this is necessary because the converter from proc doesn't seem to work
-proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: proc(event: ReactiveEvent)) =
-    let item = ReactivePropertyItem.init()
-    item.procValue = value
-    item.stringValue = "<proc>"
-    item.intValue = 1
-    item.floatValue = 1
-    item.isProc = true
-    props[name] = item
-
-## Save a proc to a ReactivePropertyItem ... this is necessary because the converter from proc doesn't seem to work
-proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: proc()) =
-    props[name] = proc(_: ReactiveEvent) = value()
-
-## HACK: Save a ReactivePropertyItem to the property list ... somehow the above function is being called in this case without this...
-proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: ReactivePropertyItem) =
-    {.warning[deprecated]:off.}:
-        props.del(name)
-        props.add(name, value) 
-
-## Convert a ReactivePropertyItem to a string
-converter propToString*(item: ReactivePropertyItem) : string = 
-    if item == nil: return ""
-    return item.stringValue
-
-## Convert a ReactivePropertyItem to a cstring
-converter propToCString*(item: ReactivePropertyItem) : cstring = 
-    if item == nil: return ""
-    return item.stringValue.cstring
-
-## Convert a ReactivePropertyItem to an int
-converter propToInt*(item: ReactivePropertyItem) : int = 
-    if item == nil: return 0
-    return item.intValue
-
-## Convert a ReactivePropertyItem to an int32
-converter propToInt32*(item: ReactivePropertyItem) : int32 = 
-    if item == nil: return 0
-    return item.intValue.int32
-
-## Convert a ReactivePropertyItem to an int64
-converter propToInt64*(item: ReactivePropertyItem) : int64 = 
-    if item == nil: return 0
-    return item.intValue.int64
-
-## Convert a ReactivePropertyItem to a float
-converter propToFloat*(item: ReactivePropertyItem) : float =
-    if item == nil: return 0
-    return item.floatValue
-
-## Convert a ReactivePropertyItem to a proc
-converter propToProc*(item: ReactivePropertyItem) : proc(event: ReactiveEvent) = 
-    if item == nil: return nil
-    return item.procValue
-
-## Convert a ReactivePropertyItem to a bool
-converter propToBool*(item: ReactivePropertyItem) : bool = 
-    if item == nil: return false
-    return item.intValue != 0
-
-## Utility to get an optional value from the property bag
-proc `{}`*(props: Table[string, ReactivePropertyItem], key: string): ReactivePropertyItem =
-    return props.getOrDefault(key, nil)
-
+import classes
+import ./events
+import ./properties
 
 
 ##
@@ -235,11 +64,12 @@ class Component:
 
 
     ## Trigger an event
-    method sendEventToProps(name: string, value: string = "") = 
+    method sendEventToProps(name: string, value: string = "") : ReactiveEvent {.discardable.} = 
         let event = ReactiveEvent.init(name, value)
         let handlerProp = this.props{name}
         if handlerProp != nil and handlerProp.procValue != nil:
             handlerProp.procValue(event)
+        return event
 
 
     ## Trigger an event
@@ -247,6 +77,8 @@ class Component:
         let handlerProp = this.props{event.name}
         if handlerProp != nil and handlerProp.procValue != nil:
             handlerProp.procValue(event)
+
+
 
     ## Called when the component has been mounted
     method onMount() = discard
@@ -265,6 +97,99 @@ class Component:
 
     ## Called on unmount
     method onNativeUnmount() = discard
+
+
+
+
+## Find a parent with the specified type
+proc findParent* [T] (this : Component, _: typedesc[T]) : T =
+
+    # Check if we match
+    var current = this.renderedParent
+    while current != nil:
+        try:
+            return current.T()
+        except:
+            discard
+        current = current.renderedParent
+
+    # Not found
+    return nil
+
+
+## Find the first child with the specified type
+proc findChild* [T] (this : Component, _: typedesc[T]) : T =
+
+    # Check children
+    for child in this.renderedChildren:
+        try:
+            return child.T()
+        except:
+            discard
+
+    # None found, search recursively
+    for child in this.renderedChildren:
+        let found = child.findChild(T)
+        if found != nil: return found
+
+    # Not found
+    return nil
+
+
+## Find the first child matching the predicate
+proc findChild* [T] (this : Component, pred : proc (it : T) : bool) : T =
+
+    # Check children
+    for child in this.renderedChildren:
+        try:
+            let childCon = child.T()
+            if pred(childCon): return childCon
+        except:
+            discard
+
+    # None found, search recursively
+    for child in this.renderedChildren:
+        let found = child.findChild(pred)
+        if found != nil: return found
+
+    # Not found
+    return nil
+
+
+## Find all children matching the predicate
+proc findChildren* [T] (this : Component, includeSubChildren : bool = false, pred : proc (it : T) : bool) : seq[T] =
+
+    # Create list
+    var list : seq[T]
+
+    # Check children
+    for child in this.renderedChildren:
+
+        # Check if this child is valid, if so add it
+        try:
+
+            # Add if it works
+            let validChild = child.T()
+            if not pred(validChild): raise newException(OSError, "Skip")
+            list.add(validChild)
+            if not includeSubChildren:
+                continue
+
+        except:
+            discard
+
+        # Child is not valid, check it's children
+        let childList = child.findChildren(includeSubChildren, pred)
+        if childList.len > 0:
+            list.add(childList)
+
+    # Done
+    return list
+
+
+## Find all children of the specified type
+proc findChildren* [T] (this : Component, _: typedesc[T], includeSubChildren : bool = false) : seq[T] =
+    return this.findChildren(includeSubChildren, proc(it : T) : bool = true)
 
 
 

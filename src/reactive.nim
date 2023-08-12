@@ -9,7 +9,9 @@ import ./reactive/shared/htmloutput
 import ./reactive/shared/basewebcomponent
 import ./reactive/shared/webview_bridge
 import ./reactive/shared/assets
-export basecomponent, utils, mounts, htmloutput, basewebcomponent, webview_bridge, assets
+import ./reactive/shared/events
+import ./reactive/shared/properties
+export basecomponent, utils, mounts, htmloutput, basewebcomponent, webview_bridge, assets, events, properties
 
 # DSL stuff ... we need to export some other libraries as well so they're available from the macro output
 import ./reactive/shared/componentsDSL
@@ -30,7 +32,8 @@ when defined(windows):
     import ./reactive/windows/components/window
     import ./reactive/windows/components/trayicon
     import ./reactive/windows/components/hwnd_component
-    export dialogs, runloop, window, trayicon, hwnd_component
+    import ./reactive/windows/components/menu
+    export dialogs, runloop, window, trayicon, hwnd_component, menu
 
 elif defined(macosx):
 

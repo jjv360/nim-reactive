@@ -4,7 +4,6 @@ import std/sugar
 ## Exports that need to be exposed for lib users
 export sugar.capture
 
-
 ## Convert a single command to output code
 var lastID {.compileTime.} = 0
 proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNode] =
@@ -126,7 +125,6 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
 
     elif cmd.kind == nnkCall or cmd.kind == nnkObjConstr:
 
-
         # Render a single component, with props and possibly children in the Function Call format, ie: Comp(prop = name): ChildComp()
         let nodeClassIdent = cmd[0]
         var code = nnkStmtList.newNimNode()
@@ -155,21 +153,23 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
                 # Set a prop value
                 let propName = $child[0]
                 let propValue = child[1]
-                # let PropertyItem = ident"PropertyItem"
                 code.add(quote do:
                     let propValue = `propValue`
                     `nodeVarName`.props[`propName`] = propValue
                 )
-                # if propName == "text":
-                #     echo "====2 " & propName
-                #     echo code.repr
-                #     echo ""
-                #     echo ""
 
             elif child.kind == nnkStmtList and idx == cmd.len-1:
 
                 # Last one is a statement list, meaning it has children
                 hasChildrenAtEnd = true
+
+            elif child.kind == nnkIdent:
+
+                # A single identifier on it's own, this is the same as "name = true"
+                let propName = $child
+                code.add(quote do:
+                    `nodeVarName`.props[`propName`] = true
+                )
 
             else:
 
@@ -193,6 +193,44 @@ proc componentsConvertSingle(cmd: NimNode): tuple[code: NimNode, varIdent: NimNo
                 )
 
         return (code, nodeVarName)
+
+    elif cmd.kind == nnkIfStmt and cmd[0].kind == nnkElifBranch and cmd[0][1].kind == nnkStmtList:
+
+        # A multiline IF statement ... keep it, but replace the inner code
+        var innerCode = cmd[0][1]
+
+        # Create empty Group node and empty statement list
+        var code = newStmtList()
+        let nodeClassIdent = ident"Group"
+
+        # Replace each child in the stmt list
+        for idx, child in innerCode:
+
+            # Generate output code
+            let gen = componentsConvertSingle(child)
+
+            # Add to the body
+            code.add(gen.code)
+
+            # Attach to parent node
+            let varIdent = gen.varIdent
+            code.add(quote do:
+                `nodeVarName`.children.add(`varIdent`)
+            )
+
+        # Prepend the node creation, before the IF
+        let allCode = newStmtList()
+        allCode.add(quote do:
+            let `nodeVarName` = `nodeClassIdent`.init()
+        )
+
+        # Keep the IF and replace the body
+        var newCode = cmd.copyNimTree()
+        newCode[0][1] = code
+        allCode.add(newCode)
+
+        # Done
+        return (allCode, nodeVarName)
 
     else:
 

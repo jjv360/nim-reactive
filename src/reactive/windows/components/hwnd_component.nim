@@ -190,4 +190,4 @@ proc GetLastErrorString*(): string =
 
 ## Raise the latest Win32 error as an exception
 proc raiseWin32Error*(prefix : string = "") =
-    raise newException(OSError, prefix & " - Win32 error: " & GetLastErrorString())
+    raise newException(OSError, prefix & " Win32 error: 0x" & GetLastError().uint.toHex & " " & GetLastErrorString())

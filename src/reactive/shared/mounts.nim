@@ -1,6 +1,7 @@
 import std/sequtils
 import classes
 import ./basecomponent
+import ./properties
 
 
 ##

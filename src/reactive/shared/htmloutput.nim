@@ -2,6 +2,7 @@ import std/tables
 import std/strutils
 import classes
 import ./basecomponent
+import ./properties
 
 
 
