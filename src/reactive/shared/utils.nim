@@ -37,3 +37,22 @@ proc getOrDefault* [T] (this: seq[T], idx: int, default: T = nil): T =
     if idx < 0: return default
     if idx >= this.len: return default
     else: return this[idx]
+
+
+## Find an item using a predicate. Returns null if not found.
+proc findIf* [T] (s: seq[T], pred: proc(x: T): bool): T =
+    for item in s:
+        if pred(item):
+            return item
+    return nil
+
+
+## Find an item using a predicate. Returns null if not found.
+# template findIt* [T] (s: seq[T], pred: untyped): T =
+#     var result : T = nil
+#     for it in s:
+#         var found = pred
+#         if found:
+#             result = it
+#             break
+#     return result

@@ -2,7 +2,6 @@ import std/asyncdispatch
 import ./dialogs
 import winim/lean
 import ../shared/mounts
-import ./native/webview2
 
 ## Entry point for a Reactive app
 proc reactiveStart*(code: proc()) =
@@ -24,9 +23,6 @@ proc reactiveStart*(code: proc()) =
             while PeekMessage(msg, 0, 0, 0, PM_REMOVE) != 0:
                 TranslateMessage(msg)
                 DispatchMessage(msg)
-
-            # Drain the WebView's event loop
-            # WebView2_MessageLoop()
 
             # Process pending asyncdispatch events
             if asyncdispatch.hasPendingOperations():

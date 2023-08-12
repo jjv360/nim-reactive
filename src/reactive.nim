@@ -8,7 +8,8 @@ import ./reactive/shared/mounts
 import ./reactive/shared/htmloutput
 import ./reactive/shared/basewebcomponent
 import ./reactive/shared/webview_bridge
-export basecomponent, utils, mounts, htmloutput, basewebcomponent, webview_bridge
+import ./reactive/shared/assets
+export basecomponent, utils, mounts, htmloutput, basewebcomponent, webview_bridge, assets
 
 # DSL stuff ... we need to export some other libraries as well so they're available from the macro output
 import ./reactive/shared/componentsDSL
