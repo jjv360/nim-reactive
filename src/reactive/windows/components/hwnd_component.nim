@@ -63,7 +63,7 @@ class HWNDComponent of NativeComponent:
         HWND_MESSAGE,                       # Parent window    
         0,                                  # Menu
         GetModuleHandle(nil),               # Instance handle
-        nil                                 # Additional application data, unused since we're keeping references in `activeHWNDs`
+        nil                                 # Extra data
     )
 
     ## Destroys the native HWND. The default action just calls DestroyWindow().

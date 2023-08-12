@@ -18,10 +18,10 @@ var activeHWNDs: Table[HWND, RootRef]
 proc wndProcProxy(hwnd: HWND, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {.stdcall.}
 
 ## Register the Win32 "class"
-proc registerWindowClass*(): string =
+proc registerWindowClass2*(): string =
 
     # If done already, stop
-    const WindowClassName = "NimReactiveWindowClass"
+    const WindowClassName = "NimReactiveWindowClassOld"
     var hasDone {.global.} = false
     if hasDone:
         return WindowClassName
@@ -89,7 +89,7 @@ class Window of WebViewBridge:
         # Create the native window
         this.hwnd = CreateWindow(
             #0,#WS_EX_LAYERED,                   # Extra window styles
-            registerWindowClass(),              # Class name
+            registerWindowClass2(),              # Class name
             this.props{"title"}.cstring,        # Window title
             WS_OVERLAPPEDWINDOW,                # Window style
 

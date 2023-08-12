@@ -6,6 +6,9 @@ import ../../shared/basecomponent
 import ../../shared/assets
 import ./hwnd_component
 
+## Tray message ID
+const WM_MyTrayMessage = WM_USER + 1
+
 ## Tray icon
 class TrayIcon of HWNDComponent:
 
@@ -33,8 +36,8 @@ class TrayIcon of HWNDComponent:
         let width = GetSystemMetrics(SM_CXSMICON)
         let height = GetSystemMetrics(SM_CYSMICON)
         if width == 0 or height == 0: raiseWin32Error("Unable to get system tray icon size.")
-        # if width != image.width or height != image.height:
-        #     image = image.resize(width, height)
+        if width != image.width or height != image.height:
+            image = image.resize(width, height)
 
         # Create icon information
         var iconInfo : ICONINFO
@@ -88,6 +91,7 @@ class TrayIcon of HWNDComponent:
 
     ## Called when unmounted
     method onNativeUnmount() =
+        super.onNativeUnmount()
 
         # Unmount it
         var data : NOTIFYICONDATAW
@@ -108,10 +112,12 @@ class TrayIcon of HWNDComponent:
         # Setup notification data
         var data : NOTIFYICONDATAW
         data.cbSize = sizeof(data).DWORD
+        data.uVersion = NOTIFYICON_VERSION_4
         data.hWnd = this.hwnd
         data.uID = 1                                    # <-- No unique ID needed since we make a new window for each tray icon
-        data.uFlags = NIF_STATE or NIF_TIP or NIF_SHOWTIP
+        data.uFlags = NIF_STATE or NIF_TIP or NIF_SHOWTIP or NIF_MESSAGE
         data.dwState = 0
+        data.uCallbackMessage = WM_MyTrayMessage
 
         # Add icon if we have one
         if this.hIcon != 0:
@@ -120,7 +126,7 @@ class TrayIcon of HWNDComponent:
 
         # Convert tooltip to TCHAR with a 64-byte limit, and copy it into the struct
         var tooltip = this.props{"tooltip"}.string
-        if tooltip.len > 64: tooltip = tooltip[0 ..< 63]
+        if tooltip.len > 63: tooltip = tooltip[0 ..< 63]
         let wTooltip = +$tooltip
         for i in 0 ..< wTooltip.len: 
             data.szTip[i] = wTooltip[i]
@@ -141,8 +147,40 @@ class TrayIcon of HWNDComponent:
                 raiseWin32Error("Unable to create system tray icon.")
 
             # Update version
-            data.uVersion = NOTIFYICON_VERSION_4
             Shell_NotifyIconW(NIM_SETVERSION, data)
 
             # It's mounted now
             this.trayIsMounted = true
+
+
+    ## WndProc callback
+    method wndProc(hwnd: HWND, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT =
+
+        # Check if message is for another component
+        if uMsg != WM_MyTrayMessage:
+            return super.wndProc(hwnd, uMsg, wParam, lParam)
+
+        # Check message
+        let uMsg2 = LOWORD(lParam)
+        if uMsg2 == WM_LBUTTONUP:
+
+            # User activated the tray icon
+            echo "Clicked!"
+            this.sendEventToProps("onPress")
+            this.sendEventToProps("onActivate")
+            return 0
+
+        elif uMsg2 == WM_CONTEXTMENU:
+
+            # User activated the tray icon
+            echo "Context menu!"
+            this.sendEventToProps("onContextMenu")
+            this.sendEventToProps("onActivate")
+            return 0
+
+        else:
+
+            # Pass on to base
+            return super.wndProc(hwnd, uMsg, wParam, lParam)
+
+        
