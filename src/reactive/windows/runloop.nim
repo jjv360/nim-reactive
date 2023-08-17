@@ -1,5 +1,6 @@
 import std/asyncdispatch
 import stdx/dynlib
+import std/times
 import ./dialogs
 import winim/mean
 import ../shared/mounts
@@ -19,6 +20,23 @@ dynamicImport("uxtheme.dll"):
     ## Set the preferred app mode, mainly changes context menus
     proc SetPreferredAppMode(mode : PreferredAppMode) {.stdcall, winapiOrdinal:135, winapiVersion: "10.0.17763".}
 
+
+## Run the WinApi event loop
+proc winApiEventLoop() {.async.} =
+
+    # Run continuously while there are mounted components
+    while ReactiveMountManager.shared.mountedComponents.len > 0:
+
+        # Drain the Win32 event queue
+        var msg: MSG
+        while PeekMessage(msg, 0, 0, 0, PM_REMOVE) != 0:
+            TranslateMessage(msg)
+            DispatchMessage(msg)
+
+        # Yield to the dispatcher
+        await sleepAsync(5)
+
+
 ## Entry point for a Reactive app
 proc reactiveStart*(code: proc()) =
 
@@ -37,22 +55,11 @@ proc reactiveStart*(code: proc()) =
         # Run their code
         code()
 
-        # Run the Windows event loop
-        var msg: MSG
-        while true:
+        # Setup WinApi event loop
+        asyncCheck winApiEventLoop()
 
-            # Drain the Win32 event queue
-            while PeekMessage(msg, 0, 0, 0, PM_REMOVE) != 0:
-                TranslateMessage(msg)
-                DispatchMessage(msg)
-
-            # Process pending asyncdispatch events
-            if asyncdispatch.hasPendingOperations():
-                asyncdispatch.drain(timeout = 50)
-
-            # Quit the app if there's no pending operations on asyncdispatch and there's no mounted components
-            if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:
-                break
+        # Run the async dispatcher forever
+        runForever()
         
     except:
 
