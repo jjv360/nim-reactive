@@ -28,12 +28,13 @@ when defined(windows):
 
     # Windows platform
     import ./reactive/windows/dialogs
+    import ./reactive/windows/res
     import ./reactive/windows/runloop
     import ./reactive/windows/components/window
     import ./reactive/windows/components/trayicon
     import ./reactive/windows/components/hwnd_component
     import ./reactive/windows/components/menu
-    export dialogs, runloop, window, trayicon, hwnd_component, menu
+    export dialogs, res, runloop, window, trayicon, hwnd_component, menu
 
 elif defined(macosx):
 

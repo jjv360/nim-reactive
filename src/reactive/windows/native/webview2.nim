@@ -8,11 +8,11 @@
 
 
 import std/os
+import stdx/dynlib
 import winim/lean
 
 
 # Embed + import WebView2Wrapper.dll
-import ./dynamicimport
 const dllName = "WebView2Wrapper_" & hostCPU & ".dll"
 const dllData = staticRead(dllName)
 dynamicImportFromData(dllName, dllData):

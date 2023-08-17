@@ -10,6 +10,7 @@ installExt      = @["nim", "png", "dll"]
 # Dependencies
 requires "nim >= 1.6.10"
 requires "classes >= 0.3.16"
+requires "stdx >= 0.1.0"
 requires "winim >= 3.9.0"
 requires "pixie >= 5.0.6"
 # requires "webview >= 0.1.0"

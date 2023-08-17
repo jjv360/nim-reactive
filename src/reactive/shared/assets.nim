@@ -4,6 +4,8 @@ import std/strformat
 import std/asyncdispatch
 import std/uri
 import std/mimetypes
+import stdx/sequtils
+import stdx/sugar
 import classes
 import ./utils
 
@@ -47,7 +49,7 @@ singleton ReactiveAssets:
 
             # An embedded asset
             let id = parseInt(uri.hostname)
-            let asset = this.assets.findIf(proc (it : ReactiveAsset) : bool = it.embeddedID == id)
+            let asset = this.assets.findIt(it.embeddedID == id)
             if asset == nil:
                 raise newException(Exception, "Asset not found: " & url)
 
@@ -84,7 +86,7 @@ proc reactiveAsset*(filepath : static[string]) : string =
     const mime = newMimetypes().getMimetype(extension)
 
     # Add to assets if needed
-    var asset = ReactiveAssets.shared.assets.findIf(proc(it : ReactiveAsset) : bool = it.fullPath == absolutePath2)
+    var asset = ReactiveAssets.shared.assets.findIt(it.fullPath == absolutePath2)
     if asset == nil:
 
         # Generate unique embedded ID

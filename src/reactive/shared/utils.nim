@@ -32,27 +32,19 @@ proc staticDataURI*(filename: static[string]): string =
     return "data:" & mime & ";base64," & base64data
 
 
-## getOrDefault for seq's
-proc getOrDefault* [T] (this: seq[T], idx: int, default: T = nil): T =
-    if idx < 0: return default
-    if idx >= this.len: return default
-    else: return this[idx]
+## Display an error dialog
+template displayCurrentException*(title : string = "Error") =
 
+    # Get error string
+    var str = getCurrentExceptionMsg()
 
-## Find an item using a predicate. Returns null if not found.
-proc findIf* [T] (s: seq[T], pred: proc(x: T): bool): T =
-    for item in s:
-        if pred(item):
-            return item
-    return nil
+    # Log it
+    echo "[Reactive] " & title & " - " & str
 
+    # Strip out the async traceback
+    let idx = str.find("Async traceback:\n")
+    if idx != -1:
+        str = str[0 ..< idx]
 
-## Find an item using a predicate. Returns null if not found.
-# template findIt* [T] (s: seq[T], pred: untyped): T =
-#     var result : T = nil
-#     for it in s:
-#         var found = pred
-#         if found:
-#             result = it
-#             break
-#     return result
+    # Show alert dialog
+    alert(str, title, dlgError)

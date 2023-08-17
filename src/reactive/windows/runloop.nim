@@ -1,7 +1,23 @@
 import std/asyncdispatch
+import stdx/dynlib
 import ./dialogs
-import winim/lean
+import winim/mean
 import ../shared/mounts
+import ../shared/utils
+
+## Useful functions from uxtheme.dll
+dynamicImport("uxtheme.dll"):
+
+    ## Preferred app modes
+    type PreferredAppMode = enum 
+        APPMODE_DEFAULT = 0
+        APPMODE_ALLOWDARK = 1
+        APPMODE_FORCEDARK = 2
+        APPMODE_FORCELIGHT = 3
+        APPMODE_MAX = 4
+
+    ## Set the preferred app mode, mainly changes context menus
+    proc SetPreferredAppMode(mode : PreferredAppMode) {.stdcall, winapiOrdinal:135, winapiVersion: "10.0.17763".}
 
 ## Entry point for a Reactive app
 proc reactiveStart*(code: proc()) =
@@ -11,6 +27,12 @@ proc reactiveStart*(code: proc()) =
 
         # Set DPI awareness
         SetProcessDPIAware()
+
+        # Allow app to be in dark mode if the system is in dark mode
+        try:
+            SetPreferredAppMode(APPMODE_ALLOWDARK)
+        except:
+            echo "[Reactive] Failed to set dark mode support: " & getCurrentExceptionMsg()
 
         # Run their code
         code()
@@ -32,9 +54,7 @@ proc reactiveStart*(code: proc()) =
             if not asyncdispatch.hasPendingOperations() and ReactiveMountManager.shared.mountedComponents.len == 0:
                 break
         
-    except Exception as err:
+    except:
 
         # Show alert
-        echo err.msg
-        echo err.getStackTrace()
-        alert(err.msg, "App crashed", dlgError)
+        displayCurrentException()
