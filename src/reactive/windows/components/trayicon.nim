@@ -168,7 +168,9 @@ class TrayIcon of HWNDComponent:
         if uMsg2 == WM_LBUTTONUP:
 
             # User activated the tray icon, process click event
-            let event = ReactivePointerEvent().init("onPress")
+            let event = ReactivePointerEvent.init()
+            event.name = "onPress"
+            # TODO: Pointer coordinates?
             this.sendEventToProps(event)
             if event.isHandled: 
                 return 0
@@ -178,7 +180,7 @@ class TrayIcon of HWNDComponent:
                 return 0
 
             # Show menu
-            this.openContextMenu()
+            asyncCheck this.openContextMenu()
             return 0
 
         elif uMsg2 == WM_CONTEXTMENU:
@@ -192,7 +194,7 @@ class TrayIcon of HWNDComponent:
                 return 0
 
             # Show menu
-            this.openContextMenu()
+            asyncCheck this.openContextMenu()
             return 0
 
         else:
@@ -202,7 +204,7 @@ class TrayIcon of HWNDComponent:
 
 
     ## Display the context menu for this tray icon
-    method openContextMenu() =
+    method openContextMenu() {.async.} =
 
         # Build menu
         let menuComponent = this.findChild(Menu)
@@ -210,6 +212,6 @@ class TrayIcon of HWNDComponent:
             return
         
         # Show menu
-        menuComponent.displayContextMenu()
+        await menuComponent.displayContextMenu()
 
         

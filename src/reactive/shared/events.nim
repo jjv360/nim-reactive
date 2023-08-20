@@ -11,13 +11,11 @@ class ReactiveEvent:
     ## Event value
     var value = ""
 
+    ## Source component
+    var source : RootRef = nil
+
     ## True if the standard event behaviour should be cancelled
     var isHandled = false
-
-    ## Constructor
-    method init(name: string, value: string = "") =
-        this.name = name
-        this.value = value
 
     ## Mark as handled, which prevents the default behaviour
     method handled() =
@@ -40,9 +38,10 @@ class ReactivePointerEvent of ReactiveEvent:
     ## Pointer type
     var pointerType = "mouse"
 
-    ## Constructor
-    method init(name: string, pointerType : string = "mouse", x : float = 0, y : float = 0) =
-        super.init(name)
-        this.pointerType = pointerType
-        this.x = x
-        this.y = y
+
+##
+## Event emitter class
+class ReactiveEventEmitter:
+
+    ## Event handlers
+    

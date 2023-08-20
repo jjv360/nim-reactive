@@ -74,7 +74,7 @@ class Window of WebViewBridge:
 
             # Prompt the user to ask to install it
             # TODO: Automatically download and install it, showing the user the progress...
-            alert(
+            await alert(
                 text = "This app requires the WebView2 component.", 
                 title = "Missing component", 
                 icon = dlgQuestion

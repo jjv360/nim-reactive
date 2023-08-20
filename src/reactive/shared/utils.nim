@@ -33,18 +33,26 @@ proc staticDataURI*(filename: static[string]): string =
 
 
 ## Display an error dialog
-template displayCurrentException*(title : string = "Error") =
+template displayCurrentException*(title : string = "Error", shouldWait : bool = false, fullStack : bool = false) =
 
     # Get error string
     var str = getCurrentExceptionMsg()
 
+    # Strip out the async traceback which for some reason is included in the "message" text
+    if not fullStack:
+        let idx = str.find("Async traceback:\n")
+        if idx != -1:
+            str = str[0 ..< idx]
+
+    # If full stack, add the stack trace
+    if fullStack:
+        str &= "\n\nStack trace:\n" & getCurrentException().getStackTrace()
+
     # Log it
     echo "[Reactive] " & title & " - " & str
 
-    # Strip out the async traceback
-    let idx = str.find("Async traceback:\n")
-    if idx != -1:
-        str = str[0 ..< idx]
-
     # Show alert dialog
-    alert(str, title, dlgError)
+    if shouldWait:
+        waitFor alert(str, title, dlgError)
+    else:
+        asyncCheck alert(str, title, dlgError)

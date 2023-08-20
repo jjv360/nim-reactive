@@ -1,12 +1,14 @@
 ##
 ## Interaction with system dialogs
 import winim/lean
+import stdx/asyncdispatch
+# import std/times
 
 ## Alert icon types
 type ReactiveDialogIcon* = enum dlgInfo, dlgWarning, dlgError, dlgQuestion
 
 # Show an alert
-proc alert*(text: string, title: string = "", icon: ReactiveDialogIcon = dlgInfo) =
+proc alert*(text: string, title: string = "", icon: ReactiveDialogIcon = dlgInfo) {.async.} =
 
     # Get correct icon
     var iconFlag: UINT = MB_ICONINFORMATION
@@ -15,11 +17,12 @@ proc alert*(text: string, title: string = "", icon: ReactiveDialogIcon = dlgInfo
     if icon == ReactiveDialogIcon.dlgQuestion: iconFlag = MB_ICONQUESTION
 
     # Show message box
-    MessageBox(0, text, title, MB_OK or iconFlag)
+    awaitThread(text, title, iconFlag):
+        MessageBox(0, text, title, MB_OK or iconFlag)
 
 
 # Show a confirmation prompt
-proc confirm*(text: string, title: string = "", icon: ReactiveDialogIcon = dlgInfo) : bool =
+proc confirm*(text: string, title: string = "", icon: ReactiveDialogIcon = dlgInfo) : Future[bool] {.async.} =
 
     # Get correct icon
     var iconFlag: UINT = MB_ICONINFORMATION
@@ -28,8 +31,10 @@ proc confirm*(text: string, title: string = "", icon: ReactiveDialogIcon = dlgIn
     if icon == ReactiveDialogIcon.dlgQuestion: iconFlag = MB_ICONQUESTION
 
     # Show message box
-    let res = MessageBox(0, text, title, MB_OKCANCEL or iconFlag)
+    var res : int32 
+    awaitThread(text, title, iconFlag, res): res = MessageBox(0, text, title, MB_OKCANCEL or iconFlag)
     if res == IDOK: 
         return true
     else: 
         return false
+

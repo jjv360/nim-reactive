@@ -13,6 +13,7 @@ class ReactivePropertyItem:
     var intValue = 0
     var floatValue = 0.0
     var procValue: proc(arg: ReactiveEvent) = nil
+    var objValue: RootRef = nil
 
     ## Original value type
     var isString = false
@@ -20,6 +21,7 @@ class ReactivePropertyItem:
     var isFloat = false
     var isNumber = false
     var isProc = false
+    var isObj = false
 
 
 ## Convert a string to a PropertyItem
@@ -95,6 +97,16 @@ converter propFromProc*(value: proc()) : ReactivePropertyItem =
     item.isProc = true
     return item
 
+## Convert an object to a ReactivePropertyItem
+converter propFromObject*(value: RootRef) : ReactivePropertyItem =
+    let item = ReactivePropertyItem.init()
+    item.objValue = value
+    item.stringValue = "<object>"
+    item.intValue = 1
+    item.floatValue = 1
+    item.isObj = true
+    return item
+
 ## Save a proc to a ReactivePropertyItem ... this is necessary because the converter from proc doesn't seem to work
 proc `[]=`*(props: var Table[string, ReactivePropertyItem], name: string, value: proc(event: ReactiveEvent)) =
     let item = ReactivePropertyItem.init()
@@ -159,3 +171,8 @@ converter propToBool*(item: ReactivePropertyItem) : bool =
 proc `{}`*(props: Table[string, ReactivePropertyItem], key: string): ReactivePropertyItem =
     return props.getOrDefault(key, nil)
 
+## Utility to return a class type from a property
+proc asObject* [T] (this : ReactivePropertyItem, t : typedesc[T]) : T = 
+    if this == nil: return nil
+    if not this.isObj: raiseAssert("This property is not an object.")
+    return this.objValue.RootRef.T

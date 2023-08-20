@@ -11,7 +11,9 @@ import ./reactive/shared/webview_bridge
 import ./reactive/shared/assets
 import ./reactive/shared/events
 import ./reactive/shared/properties
-export basecomponent, utils, mounts, htmloutput, basewebcomponent, webview_bridge, assets, events, properties
+import ./reactive/shared/app
+import ./reactive/shared/appconfig
+export basecomponent, utils, mounts, htmloutput, basewebcomponent, webview_bridge, assets, events, properties, app, appconfig
 
 # DSL stuff ... we need to export some other libraries as well so they're available from the macro output
 import ./reactive/shared/componentsDSL

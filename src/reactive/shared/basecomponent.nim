@@ -65,15 +65,30 @@ class Component:
 
     ## Trigger an event
     method sendEventToProps(name: string, value: string = "") : ReactiveEvent {.discardable.} = 
-        let event = ReactiveEvent.init(name, value)
+
+        # Create event
+        let event = ReactiveEvent.init()
+        event.name = name
+        event.value = value
+        event.source = this
+
+        # Send it
         let handlerProp = this.props{name}
         if handlerProp != nil and handlerProp.procValue != nil:
             handlerProp.procValue(event)
+
+        # Done
         return event
 
 
     ## Trigger an event
     method sendEventToProps(event: ReactiveEvent) = 
+
+        # Update event
+        if event.source == nil:
+            event.source = this
+
+        # Send it
         let handlerProp = this.props{event.name}
         if handlerProp != nil and handlerProp.procValue != nil:
             handlerProp.procValue(event)

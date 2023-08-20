@@ -1,4 +1,5 @@
 import std/tables
+import stdx/asyncdispatch
 import classes
 import winim/mean
 import ../../shared/basecomponent
@@ -12,7 +13,7 @@ var LastMenuID = 1
 
 ##
 ## A child menu item
-class MenuItem of HWNDComponent:
+class MenuItem of Component:
 
     ## Unique menu item ID
     var hMenuID = 0
@@ -66,7 +67,7 @@ class MenuItem of HWNDComponent:
 
 ##
 ## Represents a system popup menu
-class Menu of HWNDComponent:
+class Menu of Component:
 
     ## Build the HMENU resource
     method buildHMENU() : HMENU =
@@ -101,27 +102,58 @@ class Menu of HWNDComponent:
         return hMenu
 
     ## Show context menu from the current cursor position
-    method displayContextMenu() =
+    method displayContextMenu() {.async.} =
 
         # Build menu
         let hMenu = this.buildHMENU()
 
         # Get cursor position
         var cursorPos : POINT
-        let result = GetCursorPos(cursorPos)
-        if result == FALSE:
+        let winResult1 = GetCursorPos(cursorPos)
+        if winResult1 == FALSE:
             raiseWin32Error("Unable to get cursor position.")
 
-        # Show menu
-        let result2 = TrackPopupMenuEx(hMenu, TPM_NONOTIFY or TPM_RETURNCMD or TPM_RIGHTBUTTON, cursorPos.x, cursorPos.y, this.hwnd, nil)
-        if result2 == FALSE:
-            return # User cancelled the menu
+        # Show menu in new thread
+        var winResult2 : WINBOOL = 0
+        awaitThread(winResult2, hMenu, cursorPos):
+
+            # Create temporary window
+            let hwnd = CreateWindowExW(
+                0,                                  # Extra window styles
+                registerWindowClass(),              # Class name
+                "HiddenWindow",                     # Window title
+                0,                                  # Window style
+
+                # Size and position, x, y, width, height
+                0, 0, 0, 0,
+
+                HWND_MESSAGE,                       # Parent window    
+                0,                                  # Menu
+                GetModuleHandle(nil),               # Instance handle
+                nil                                 # Extra data
+            )
+
+            # Workaround: The menu doesn't close unless the user clicks a menu item. This issue is addressed in the elusive MSDN article Q135788.
+            # Basically, the HWND needs to be made foreground before calling TrackPopupMenu(). Very weird, considering the window isn't even a
+            # real window...
+            SetForegroundWindow(hwnd)
+
+            # Run the menu
+            winResult2 = TrackPopupMenuEx(hMenu, TPM_NONOTIFY or TPM_RETURNCMD or TPM_RIGHTBUTTON, cursorPos.x, cursorPos.y, hwnd, nil)
+
+            # Destroy the temporary window
+            DestroyWindow(hwnd)
+
+        # Check if cancelled
+        if winResult2 == FALSE:
+            return
 
         # Get selected item
-        let selectedItem = this.findChild(proc(it : MenuItem) : bool = it.hMenuID == result2)
+        let selectedItem = this.findChild(proc(it : MenuItem) : bool = it.hMenuID == winResult2)
         if selectedItem == nil:
             echo "Unable to find selected menu item."
             return
 
         # Execute it
         selectedItem.sendEventToProps("onPress")
+        return

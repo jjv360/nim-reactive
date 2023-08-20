@@ -5,6 +5,7 @@ import ./dialogs
 import winim/mean
 import ../shared/mounts
 import ../shared/utils
+import ../shared/app
 
 ## Useful functions from uxtheme.dll
 dynamicImport("uxtheme.dll"):
@@ -43,6 +44,9 @@ proc reactiveStart*(code: proc()) =
     # Catch errors
     try:
 
+        # Log app start
+        echo "[Reactive] Starting " & ReactiveApp.name & " version " & ReactiveApp.version
+
         # Set DPI awareness
         SetProcessDPIAware()
 
@@ -64,4 +68,4 @@ proc reactiveStart*(code: proc()) =
     except:
 
         # Show alert
-        displayCurrentException()
+        displayCurrentException(title = "App crash", shouldWait = true, fullStack = true)
